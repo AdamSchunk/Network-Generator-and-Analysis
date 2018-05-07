@@ -12,11 +12,15 @@ public class Node {
 	Map<Integer, Integer> intersection;
 	
 	
-	public Node(int followers, int following, int maxNodes) {
+	public Node(int followers, int following) {
+		this(followers, following, numNodes);
+		numNodes++;
+	}
+	
+	public Node(int id, int followers, int following) {
 		this.num_following = following;
 		this.num_followers = followers;
-		this.id = numNodes;
-		numNodes++;
+		this.id = id;
 		this.intersection = new HashMap<Integer, Integer>();
 	}
 }

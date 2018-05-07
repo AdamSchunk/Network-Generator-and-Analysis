@@ -12,7 +12,7 @@ public class NetworkGeneratorV7 {
 	static double totalFollowers = 0;
 	static double numDone = 0;
 
-	class RunnableDemo implements Runnable {
+	/*class RunnableDemo implements Runnable {
 		private Thread t;
 		private ArrayList<Node> nodes;
 		private NetworkGeneratorV7 ng;
@@ -41,7 +41,7 @@ public class NetworkGeneratorV7 {
 		public void start() {
 			t.start();
 		}
-	}
+	}*/
 
 	public int weighted_choice(double[] weights) {
 		double total = 0;
@@ -98,7 +98,7 @@ public class NetworkGeneratorV7 {
 		ArrayList<Node> nodes = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
 			int[] stats = nodeStatFunc();
-			Node n = new Node(stats[0], stats[1], size);
+			Node n = new Node(stats[0], stats[1]);
 			nodes.add(n);
 		}
 		return nodes;
@@ -223,16 +223,16 @@ public class NetworkGeneratorV7 {
 	}
 	
 	public void generateNetwork(int size) throws IOException {
-		ArrayList<Node> nodes = genNodes(size);
-		for (Node n : nodes) {
+		Network net = new Network();
+		net.nodes = genNodes(size);
+		for (Node n : net.nodes) {
 			totalFollowers += n.num_followers;
 		}
-		genEdges(nodes, false);
-
-		saveNetwork(nodes);
+		genEdges(net.nodes, false);
+		net.saveNetwork();
 	}
 
-	public void generateNetworkMultithread(int size) throws Exception {
+	/*public void generateNetworkMultithread(int size) throws Exception {
 		ArrayList<Node> nodes = genNodes(size);
 		for (Node n : nodes) {
 			totalFollowers += n.num_followers;
@@ -275,34 +275,12 @@ public class NetworkGeneratorV7 {
 			}
 		}
 		
-		saveNetwork(nodes);
-	}
-
-	public void saveNetwork(ArrayList<Node> nodes) throws IOException {
-		System.out.println("saving data");
-		// save node data
-		FileWriter nodeWriter = new FileWriter("nodes.csv");
-		for (Node n : nodes) {
-			String output = n.id + ", " + n.num_followers + ", " + n.num_following + "\n";
-			nodeWriter.write(output);
-		}
-		nodeWriter.close();
-
-		// save edge data
-		FileWriter edgeWriter = new FileWriter("edges.csv");
-		String res = "from,to,weight\n";
-		edgeWriter.write(res);
-		for (Node node : nodes) {
-			for (Integer follower : node.followers) {
-				res = node.id + ", " + follower + ", 1\n";
-				edgeWriter.write(res);
-			}
-		}
-		edgeWriter.close();
-	}
+		Network nt = new Network();
+		nt.saveNetwork(nodes);
+	}*/
 
 	public static void main(String[] args) throws Exception {
 		NetworkGeneratorV7 ng = new NetworkGeneratorV7();
-		ng.generateNetwork(10000);
+		ng.generateNetwork(1000);
 	}
 }
