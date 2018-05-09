@@ -24,9 +24,8 @@ public class Network {
 			while (scanner.hasNext()){
 				String line = scanner.next();
 				String[] data = line.split(",");
-				System.out.println(data[0] + "," + data[1]);
-				Node n = new Node(Integer.parseInt(data[0]), 
-						Integer.parseInt(data[1]), Integer.parseInt(data[2]));
+				Node n = new Node(Integer.parseInt(data[1]), 
+						Integer.parseInt(data[2]), Integer.parseInt(data[0]));
 				this.nodes.add(n);
 			}
         }
@@ -57,11 +56,13 @@ public class Network {
 	
 	
 	public Node getNodeById(int id) {
+		//System.out.println(id);
 		for (Node n : nodes) {
 			if (n.id == id) {
 				return n;
 			}
 		}
+		System.out.println("shouldnt see this");
 		return null;
 	}
 	

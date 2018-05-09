@@ -14,10 +14,11 @@ public class Node {
 	
 	public Node(int followers, int following) {
 		this(followers, following, numNodes);
+		this.id = numNodes;
 		numNodes++;
 	}
 	
-	public Node(int id, int followers, int following) {
+	public Node(int followers, int following, int id) {
 		this.num_following = following;
 		this.num_followers = followers;
 		this.id = id;

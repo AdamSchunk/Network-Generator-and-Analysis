@@ -59,10 +59,12 @@ public class NetworkGeneratorV7 {
 				return i;
 			}
 			upto += weight;
+			
 		}
 		System.out.println(upto);
 		System.out.println(choice);
 		System.out.println("Should not see this");
+		System.exit(0);
 		return 0;
 	}
 
@@ -106,7 +108,7 @@ public class NetworkGeneratorV7 {
 
 	public double[] genEdgeWeights(ArrayList<Node> nodes, int index) {
 		double[] weights = new double[nodes.size()];
-		Arrays.fill(weights, 100);
+		Arrays.fill(weights, 10);
 
 		Node baseNode = nodes.get(index);
 
@@ -119,14 +121,14 @@ public class NetworkGeneratorV7 {
 			}
 
 			// num_following/max_num_following
-			double deduct = 100 * ((double) currNode.following.size() / (double) currNode.num_following);
-			weights[i] = weights[i] - Math.min(deduct, 90); // always 10% chance of connecting
+			double deduct = 10 * ((double) currNode.following.size() / (double) currNode.num_following);
+			weights[i] = weights[i] - Math.min(deduct, 9); // minimum 10% chance of connecting
 
 			int intersection = 0;
 			if (currNode.intersection.containsKey(i)){
 				intersection = currNode.intersection.get(i);
 			}
-			weights[i] = weights[i] * (1 + intersection);
+			weights[i] = weights[i] * (1 + intersection) * 5;
 		}
 
 		return weights;
@@ -141,9 +143,9 @@ public class NetworkGeneratorV7 {
 			followersAvailable[i] = currNode.followers.size() < currNode.num_followers;
 		}
 		
-		int iteration = 0;
+		double percentDone = 0; //updates every 10%
 		while (true) {
-			int rndmFillPoint = 1000;
+			double rndmFillPercent = .7;
 			boolean someNeedsFollowers = false;
 
 			for (int i = 0; i < nodes.size(); i++) {
@@ -156,7 +158,7 @@ public class NetworkGeneratorV7 {
 				Node currNode = nodes.get(i);
 				
 				double[] weights = new double[nodes.size()];
-				if(iteration < rndmFillPoint)
+				if(percentDone <= rndmFillPercent)
 					 weights = genEdgeWeights(nodes, i);
 				else
 					Arrays.fill(weights, 1);
@@ -167,14 +169,14 @@ public class NetworkGeneratorV7 {
 				nodes.get(newFollower).following.add(currNode.id);
 				followersAvailable[i] = currNode.followers.size() < currNode.num_followers;
 				
-				if(iteration < rndmFillPoint) {
+				if(percentDone <= rndmFillPercent) {
 					updateIntersections(nodes, newFollower, i);
 				}
 				
 				numDone += 1;
 				if (numDone % (int) (totalFollowers / 100) == 0) {
+					percentDone = numDone / totalFollowers;
 					System.out.println((int) (numDone / totalFollowers * 100) + "%");
-					System.out.println(iteration);
 				}
 
 			}
@@ -186,7 +188,6 @@ public class NetworkGeneratorV7 {
 			if (singleIter) {
 				return false;
 			}
-			iteration++;
 		}
 	}
 
@@ -224,6 +225,7 @@ public class NetworkGeneratorV7 {
 	
 	public void generateNetwork(int size) throws IOException {
 		Network net = new Network();
+		
 		net.nodes = genNodes(size);
 		for (Node n : net.nodes) {
 			totalFollowers += n.num_followers;
@@ -281,6 +283,6 @@ public class NetworkGeneratorV7 {
 
 	public static void main(String[] args) throws Exception {
 		NetworkGeneratorV7 ng = new NetworkGeneratorV7();
-		ng.generateNetwork(1000);
+		ng.generateNetwork(100000);
 	}
 }
