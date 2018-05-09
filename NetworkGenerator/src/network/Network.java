@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 public class Network {
 	
 	ArrayList<Node> nodes;
+	int size = 0;
 	
 	public Network() {
 		this.nodes = new ArrayList<Node>();
@@ -29,6 +30,7 @@ public class Network {
 				this.nodes.add(n);
 			}
         }
+        this.size = nodes.size();
 	}
 	
 	public void saveNetwork() throws IOException {
