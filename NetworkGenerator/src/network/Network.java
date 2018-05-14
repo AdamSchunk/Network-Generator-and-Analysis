@@ -19,6 +19,7 @@ public class Network {
 	}
 	
 	public Network(String nodeCSVfileName, String edgeCSVfileName) throws IOException {
+		System.out.println("loading network...");
         this.nodes = new ArrayList<Node>();
         try (Scanner scanner = new Scanner(new File(nodeCSVfileName))) {
 			while (scanner.hasNext()){
@@ -41,6 +42,7 @@ public class Network {
 			}
         }
         this.size = nodes.size();
+        System.out.println("Network Loaded");
 	}
 	
 	public void saveNetwork() throws IOException {
@@ -71,7 +73,8 @@ public class Network {
 	}
 	
 	public static void main(String[] args) throws IOException{
-		Network net = new Network("nodes.csv", "edges.csv");
+		String dir = "100000_lowClustering/";
+		Network net = new Network(dir + "nodes.csv", dir + "edges.csv");
 	}
 
 }

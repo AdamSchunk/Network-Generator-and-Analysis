@@ -1,12 +1,23 @@
 package network;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.UUID;
 
+import javax.imageio.ImageIO;
 import javax.naming.InitialContext;
 
+import graphing.GraphUtils;;
+
 public class NetworkRunner {
+	
+	private static int socialPressure = 0;
+	private static int minRetweets = 10;
 	
 	public void tweet(Node user, boolean[] hasTweeted, int[] numSeen, int[] lastSeen, int ts) {
 		hasTweeted[user.id] = true;
@@ -23,7 +34,7 @@ public class NetworkRunner {
 		}
 	}
 	
-	public ArrayList<ArrayList<Node>> run(Network net, int iterations) {
+	public ArrayList<ArrayList<Node>> run(Network net) {
 		Random rand = new Random();
 		boolean[] hasTweeted = new boolean[net.size];
 		int[] numSeen = new int[net.size];
@@ -55,6 +66,8 @@ public class NetworkRunner {
 				
 				double prob = baseProb/(time_past*2);
 
+				//TODO: add social pressure influence
+				
 				if (r < prob) {
 					toTweet.add(net.getNodeById(i));
 				} 
@@ -72,19 +85,70 @@ public class NetworkRunner {
 		return timeSteps;
 	}
 
-	public void saveRun(ArrayList<ArrayList<Node>> timeSteps) {
+	public void saveRun(Network net, ArrayList<ArrayList<Node>> timeSteps, String outputDir) throws FileNotFoundException {
+		System.out.println("Saving Run...");
+		String runID = UUID.randomUUID().toString();
+		String dir = outputDir + runID + "/";
 		
+		if (!new File(dir).exists()) {
+			new File(dir).mkdirs();
+		}
+		
+		//Cumulative graph data
+		int[] data = new int[timeSteps.size()];
+		int count = 0;
+		for(int i = 0; i < timeSteps.size(); i++) {
+			count += timeSteps.get(i).size();
+			data[i] = count;
+		}
+		
+		GraphUtils runDataGraph = new GraphUtils(data);
+		runDataGraph.savePlot(dir + "cumulative.png");
+		
+		
+		//Iterative graph data
+		/*data = new int[timeSteps.size()];
+		count = 0;
+		for(int i = 0; i < timeSteps.size(); i++) {
+			data[i] = timeSteps.get(i).size();
+		}
+		
+		runDataGraph = new GraphUtils(data);
+		runDataGraph.savePlot(dir + ".png");*/
+		
+		String timeStepsString = "";
+		for (ArrayList<Node> ts : timeSteps) {
+			for (Node n : ts) {
+				timeStepsString += n.id + " ";
+			}
+			timeStepsString += "\n";
+		}
+		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
+		out.write(timeStepsString);
+		
+		System.out.println("Done");
+	}
+	
+	public void runMultiple(Network net, int iterations, String outputDir) throws FileNotFoundException {
+		for (int i = 0; i < iterations; i++) {
+			ArrayList<ArrayList<Node>> timeSteps = null;
+			while(true) {
+				timeSteps = run(net);
+				if(timeSteps.size() > minRetweets)
+					break;
+			}
+			System.out.println(timeSteps.size());
+			
+			saveRun(net, timeSteps, outputDir);
+		}
 	}
 	
 	public static void main(String[] args) throws IOException {
-		NetworkRunner runner = new NetworkRunner();
-		Network net = new Network("nodes.csv", "edges.csv");
-		ArrayList<ArrayList<Node>> timeSteps = runner.run(net, 5);
+		String dir = "100000_lowClustering/";
+		Network net = new Network(dir + "nodes.csv", dir + "edges.csv");
 		
-		System.out.println(timeSteps.size());
-		for(ArrayList<Node> nodes : timeSteps){
-			System.out.println(nodes.size());
-		}
+		NetworkRunner runner = new NetworkRunner();
+		runner.runMultiple(net, 2, "100000_lowClustering/");
 	}
 	
 }
