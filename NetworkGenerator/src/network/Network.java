@@ -29,6 +29,17 @@ public class Network {
 				this.nodes.add(n);
 			}
         }
+        
+        try (Scanner scanner = new Scanner(new File(edgeCSVfileName))) {
+        	scanner.next();
+			while (scanner.hasNext()){
+				String line = scanner.next();
+				String[] data = line.split(",");
+				int fromIdx = Integer.parseInt(data[0]);
+				int toIdx = Integer.parseInt(data[1]);
+				getNodeById(fromIdx).followers.add(toIdx);
+			}
+        }
         this.size = nodes.size();
 	}
 	
@@ -56,14 +67,7 @@ public class Network {
 	
 	
 	public Node getNodeById(int id) {
-		//System.out.println(id);
-		for (Node n : nodes) {
-			if (n.id == id) {
-				return n;
-			}
-		}
-		System.out.println("shouldnt see this");
-		return null;
+		return nodes.get(id);
 	}
 	
 	public static void main(String[] args) throws IOException{
