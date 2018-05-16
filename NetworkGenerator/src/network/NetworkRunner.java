@@ -107,14 +107,26 @@ public class NetworkRunner {
 		
 		
 		//Iterative graph data
-		/*data = new int[timeSteps.size()];
+		data = new int[timeSteps.size()];
 		count = 0;
 		for(int i = 0; i < timeSteps.size(); i++) {
 			data[i] = timeSteps.get(i).size();
 		}
 		
 		runDataGraph = new GraphUtils(data);
-		runDataGraph.savePlot(dir + ".png");*/
+		runDataGraph.savePlot(dir + "stepByStep.png");
+		
+		//follower graph data
+		data = new int[timeSteps.size()];
+		count = 0;
+		for(int i = 0; i < timeSteps.size(); i++) {
+			data[i] = net.getNodeById(i).num_followers;
+		}
+		
+		runDataGraph = new GraphUtils(data);
+		runDataGraph.savePlot(dir + "followers.png");
+		
+		
 		
 		String timeStepsString = "";
 		for (ArrayList<Node> ts : timeSteps) {
