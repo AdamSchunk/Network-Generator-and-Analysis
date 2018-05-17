@@ -8,41 +8,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class NetworkGeneratorV7 {
-	static double totalFollowers = 0;
-	static double numDone = 0;
-
-	/*class RunnableDemo implements Runnable {
-		private Thread t;
-		private ArrayList<Node> nodes;
-		private NetworkGeneratorV7 ng;
-		private ArrayList<Node> subset;
-		private boolean sectionFinished;
-
-		RunnableDemo(NetworkGeneratorV7 ng, ArrayList<Node> nodes) {
-			this.nodes = nodes;
-			this.ng = ng;
-			this.t = new Thread(this);
-			this.subset = new ArrayList<Node>();
-			this.sectionFinished = false;
-		}
-
-		public void run() {
-			this.sectionFinished = ng.genEdges(subset, true);
-		}
-
-		public void setSubset(List<Integer> indicies) {
-			subset.clear();
-			for (int idx : indicies) {
-				subset.add(nodes.get(idx));
-			}
-		}
-
-		public void start() {
-			t.start();
-		}
-	}*/
-
+public class NetworkGenerator {
+	double totalFollowers = 0;
+	double numDone = 0;
+	
 	public int weighted_choice(double[] weights) {
 		double total = 0;
 		for (double w : weights) {
@@ -50,7 +19,7 @@ public class NetworkGeneratorV7 {
 		}
 
 		Random rand = new Random();
-		int choice = (int) (rand.nextDouble() * (total));
+		int choice = (int) (rand.nextDouble() * (total)+1);
 
 		double upto = 0;
 		for (int i = 0; i < weights.length; i++) {
@@ -59,7 +28,6 @@ public class NetworkGeneratorV7 {
 				return i;
 			}
 			upto += weight;
-			
 		}
 		System.out.println(upto);
 		System.out.println(choice);
@@ -97,16 +65,18 @@ public class NetworkGeneratorV7 {
 	}
 
 	public ArrayList<Node> genNodes(int size) {
+		System.out.println("generating Nodes");
 		ArrayList<Node> nodes = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
 			int[] stats = nodeStatFunc();
 			Node n = new Node(stats[0], stats[1]);
 			nodes.add(n);
 		}
+		System.out.println("Done");
 		return nodes;
 	}
 
-	public double[] genEdgeWeights(ArrayList<Node> nodes, int index) {
+	public double[] genEdgeWeights(ArrayList<Node> nodes, int index, int clusteringWeight) {
 		double[] weights = new double[nodes.size()];
 		Arrays.fill(weights, 10);
 
@@ -128,13 +98,13 @@ public class NetworkGeneratorV7 {
 			if (currNode.intersection.containsKey(i)){
 				intersection = currNode.intersection.get(i);
 			}
-			weights[i] = weights[i] * (1 + intersection) * 5;
+			weights[i] = weights[i] * (1 + intersection) * clusteringWeight;
 		}
 
 		return weights;
 	}
 
-	public boolean genEdges(ArrayList<Node> nodes, boolean singleIter) {
+	public boolean genEdges(ArrayList<Node> nodes, double rndmFillPercent, int clusteringWeight) {
 		Boolean[] followersAvailable = new Boolean[nodes.size()];
 		Arrays.fill(followersAvailable, Boolean.TRUE);
 
@@ -143,9 +113,9 @@ public class NetworkGeneratorV7 {
 			followersAvailable[i] = currNode.followers.size() < currNode.num_followers;
 		}
 		
-		double percentDone = 0; //updates every 10%
+		double percentDone = 0;
 		while (true) {
-			double rndmFillPercent = .7;
+			
 			boolean someNeedsFollowers = false;
 
 			for (int i = 0; i < nodes.size(); i++) {
@@ -159,7 +129,7 @@ public class NetworkGeneratorV7 {
 				
 				double[] weights = new double[nodes.size()];
 				if(percentDone <= rndmFillPercent)
-					 weights = genEdgeWeights(nodes, i);
+					 weights = genEdgeWeights(nodes, i, clusteringWeight);
 				else
 					Arrays.fill(weights, 1);
 				
@@ -183,10 +153,6 @@ public class NetworkGeneratorV7 {
 			
 			if(!someNeedsFollowers) {
 				return true;
-			}
-			
-			if (singleIter) {
-				return false;
 			}
 		}
 	}
@@ -223,66 +189,17 @@ public class NetworkGeneratorV7 {
 		}
 	}
 	
-	public void generateNetwork(int size) throws IOException {
+	public Network generateNetwork(double rndmFillPercent, int clusteringWeight, int size, String dir) throws IOException {
 		Network net = new Network();
 		
 		net.nodes = genNodes(size);
 		for (Node n : net.nodes) {
 			totalFollowers += n.num_followers;
 		}
-		genEdges(net.nodes, false);
-		net.saveNetwork();
+		net.size = net.nodes.size();
+		genEdges(net.nodes, rndmFillPercent, clusteringWeight);
+		net.saveNetwork(dir);
+		return net;
 	}
 
-	/*public void generateNetworkMultithread(int size) throws Exception {
-		ArrayList<Node> nodes = genNodes(size);
-		for (Node n : nodes) {
-			totalFollowers += n.num_followers;
-		}
-
-		ArrayList<Integer> indicies = new ArrayList<Integer>();
-
-		for (int i = 0; i < size; i++) {
-			indicies.add(i);
-		}
-		
-		while(true) {
-			Collections.shuffle(indicies);
-			RunnableDemo r1 = new RunnableDemo(this, nodes);
-			RunnableDemo r2 = new RunnableDemo(this, nodes);
-			RunnableDemo r3 = new RunnableDemo(this, nodes);
-			RunnableDemo r4 = new RunnableDemo(this, nodes);
-			RunnableDemo r5 = new RunnableDemo(this, nodes);
-			
-			r1.setSubset(indicies.subList(0, indicies.size()/5));
-			r2.setSubset(indicies.subList(indicies.size()/5, 2*indicies.size()/5));
-			r3.setSubset(indicies.subList(2*indicies.size()/5, 3*indicies.size()/5));
-			r4.setSubset(indicies.subList(3*indicies.size()/5, 4*indicies.size()/5));
-			r5.setSubset(indicies.subList(4*indicies.size()/5, indicies.size()));
-			
-			
-			r1.start();
-			r2.start();
-			r3.start();
-			r4.start();
-			r5.start();
-			
-			r1.t.join();
-			r2.t.join();
-			r3.t.join();
-			r4.t.join();
-			r5.t.join();
-			if(r1.sectionFinished && r2.sectionFinished && r3.sectionFinished && r4.sectionFinished && r5.sectionFinished) {
-				break;
-			}
-		}
-		
-		Network nt = new Network();
-		nt.saveNetwork(nodes);
-	}*/
-
-	public static void main(String[] args) throws Exception {
-		NetworkGeneratorV7 ng = new NetworkGeneratorV7();
-		ng.generateNetwork(100000);
-	}
 }
