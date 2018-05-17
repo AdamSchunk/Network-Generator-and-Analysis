@@ -18,6 +18,10 @@ public class Network {
 		this.nodes = new ArrayList<Node>();
 	}
 	
+	public Network(String directory) throws IOException { //generates a network from a folder containing a nodes.csv and edges.csv
+		this(directory+"nodes.csv", directory+"edges.csv");
+	}
+	
 	public Network(String nodeCSVfileName, String edgeCSVfileName) throws IOException {
 		System.out.println("loading network...");
         this.nodes = new ArrayList<Node>();
@@ -45,9 +49,9 @@ public class Network {
         System.out.println("Network Loaded");
 	}
 	
-	public void saveNetwork() throws IOException {
+	public void saveNetwork(String dir) throws IOException {
 		System.out.println("saving data");
-		FileWriter nodeWriter = new FileWriter("nodes.csv");
+		FileWriter nodeWriter = new FileWriter(dir + "nodes.csv");
 		for (Node n : nodes) {
 			String output = n.id + "," + n.num_followers + "," + n.num_following + "\n";
 			nodeWriter.write(output);
@@ -55,7 +59,7 @@ public class Network {
 		nodeWriter.close();
 
 		// save edge data
-		FileWriter edgeWriter = new FileWriter("edges.csv");
+		FileWriter edgeWriter = new FileWriter(dir +"edges.csv");
 		String res = "from,to,weight\n";
 		edgeWriter.write(res);
 		for (Node node : nodes) {
