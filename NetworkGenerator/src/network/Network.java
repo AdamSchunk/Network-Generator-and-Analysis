@@ -71,14 +71,8 @@ public class Network {
 		edgeWriter.close();
 	}
 	
-	
 	public Node getNodeById(int id) {
 		return nodes.get(id);
-	}
-	
-	public static void main(String[] args) throws IOException{
-		String dir = "100000_lowClustering/";
-		Network net = new Network(dir + "nodes.csv", dir + "edges.csv");
 	}
 
 }

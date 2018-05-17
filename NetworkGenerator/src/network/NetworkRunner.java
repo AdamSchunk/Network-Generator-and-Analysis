@@ -151,7 +151,6 @@ public class NetworkRunner {
 		out.close();
 	}
 
-	
 	public void runMultiple(int iterations, String outputDir) throws Exception {
 		for (int i = 0; i < iterations; i++) {
 			System.out.println(i);
