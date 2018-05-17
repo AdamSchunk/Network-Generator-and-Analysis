@@ -62,7 +62,7 @@ public class RunAnalyzer {
 		for(Node n : net.nodes) { //for each node generate a window from each run
 			if(n.num_followers < 100 || n.num_followers > 2000)
 				continue;
-			
+			//System.out.println(n.id);
 			int[] window = new int[net.size];
 			for(File f : runDirectories) { //for each run find the nodes that tweeted around our base node
 				ArrayList<ArrayList<Node>> timeSteps = loadTimeSteps(f.getPath() + "/timeSteps.csv");
@@ -75,8 +75,8 @@ public class RunAnalyzer {
 					if(back < 0)
 						back = 0;
 					int front = i + 30;
-					if(front > net.size-1)
-						front = net.size-1;
+					if(front > timeSteps.size()-1)
+						front = timeSteps.size()-1;
 					
 					for(int j = back; j < front; j++) {
 						ArrayList<Node> tsInWindow = timeSteps.get(j);
@@ -89,15 +89,49 @@ public class RunAnalyzer {
 					
 				}
 			}
-			windows.add(stripUncommonNodesInWindow(window, net));
+			ArrayList<Node> strippedWindow = stripUncommonNodesInWindow(window, net);
+			windows.add(strippedWindow);
+			if(strippedWindow.size() > 3) {
+				for(Node nInWin : strippedWindow) {
+					System.out.println(nInWin.id);
+				}
+				System.out.println();
+			}
 		}
+		findClustersFromWindows(windows);
 	}
 	
-	public ArrayList<Node> stripUncommonNodesInWindow(int[] window, Network net) {
+	private ArrayList<ArrayList<Node>> findClustersFromWindows(ArrayList<ArrayList<Node>> windows) {
+		ArrayList<ArrayList<Node>> finalClusters = new ArrayList<ArrayList<Node>>();
+		for(int i = 0; i < windows.size(); i++) {
+			ArrayList<Node> clusterI = new ArrayList<Node>();
+			boolean found = false;
+			for(int j = i; j < windows.size(); j++) {
+				if(j==i)
+					continue;
+				
+				if(overlap(windows.get(i), windows.get(j)) > 5) {
+					if(!found) {
+						clusterI.addAll(windows.get(i));
+						found = true;
+					}
+						clusterI.addAll(windows.get(j));	
+				}
+			}
+		}
+		return finalClusters;
+	}
+	
+	public int overlap(ArrayList<Node> w1, ArrayList<Node> w2) {
+		int overlap = 0;
+		return overlap;
+	}
+	
+	private ArrayList<Node> stripUncommonNodesInWindow(int[] window, Network net) {
 		ArrayList<Node> potentialCluster = new ArrayList<Node>();
 		
 		for(int i = 0; i < window.length; i++) {
-			if (window[i] > 15) {
+			if (window[i] > 3) {
 				potentialCluster.add(net.getNodeById(i));
 			}
 		}
