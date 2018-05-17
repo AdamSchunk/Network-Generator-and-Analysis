@@ -58,22 +58,50 @@ public class RunAnalyzer {
 	public void findClusters() throws FileNotFoundException {
 		File[] runDirectories = new File(runDirectory).listFiles(File::isDirectory);
 		ArrayList<ArrayList<Node>> windows = new ArrayList<ArrayList<Node>>();
-		for(Node n : net.nodes) {
+		
+		for(Node n : net.nodes) { //for each node generate a window from each run
+			if(n.num_followers < 100 || n.num_followers > 2000)
+				continue;
+			
 			int[] window = new int[net.size];
-			for(File f : runDirectories) {
+			for(File f : runDirectories) { //for each run find the nodes that tweeted around our base node
 				ArrayList<ArrayList<Node>> timeSteps = loadTimeSteps(f.getPath() + "/timeSteps.csv");
-				for(int i = 0; i < timeSteps.size(); i++) {
+				for(int i = 0; i < timeSteps.size(); i++) { //for each timestep find the initial node
 					if(!timeSteps.get(i).contains(n)) {
 						continue;
 					}
+					
+					int back = i-30;
+					if(back < 0)
+						back = 0;
+					int front = i + 30;
+					if(front > net.size-1)
+						front = net.size-1;
+					
+					for(int j = back; j < front; j++) {
+						ArrayList<Node> tsInWindow = timeSteps.get(j);
+						for (Node nodeInWindow : tsInWindow) {
+							if(n.num_followers < 100 || n.num_followers > 2000)
+								continue;
+							window[nodeInWindow.id]++;
+						}
+					}
+					
 				}
 			}
+			windows.add(stripUncommonNodesInWindow(window, net));
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {
-		String dir = "100000_rndm/";
-		RunAnalyzer ra = new RunAnalyzer(dir);
-		ra.countOccurances();
-	}	
+	public ArrayList<Node> stripUncommonNodesInWindow(int[] window, Network net) {
+		ArrayList<Node> potentialCluster = new ArrayList<Node>();
+		
+		for(int i = 0; i < window.length; i++) {
+			if (window[i] > 15) {
+				potentialCluster.add(net.getNodeById(i));
+			}
+		}
+		return potentialCluster;
+	}
+		
 }
