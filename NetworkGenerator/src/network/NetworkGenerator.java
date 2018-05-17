@@ -163,30 +163,32 @@ public class NetworkGenerator {
 		Node to = nodes.get(toIdx);
 		
 		for (Integer x : to.followers) {
-			if (from.followers.contains(x) || from.following.contains(x)) {
-				Node updateNode = nodes.get(x);
-				if(updateNode.intersection.containsKey(fromIdx))
-					updateNode.intersection.replace(fromIdx, updateNode.intersection.get(fromIdx)+1);
-				else
-					updateNode.intersection.put(fromIdx, 1);
-				if(updateNode.intersection.containsKey(toIdx))
-					updateNode.intersection.replace(toIdx, updateNode.intersection.get(toIdx)+1);
-				else
-					updateNode.intersection.put(toIdx, 1);
-			}
+			Node updateNode = nodes.get(x);
+			if(updateNode.intersection.containsKey(fromIdx))
+				updateNode.intersection.replace(fromIdx, updateNode.intersection.get(fromIdx)+1);
+			else
+				updateNode.intersection.put(fromIdx, 1);
 		}
 		for (Integer x : to.following) {
-			if (from.followers.contains(x) || from.following.contains(x)) {
-				Node updateNode = nodes.get(x);
-				if(updateNode.intersection.containsKey(fromIdx))
-					updateNode.intersection.replace(fromIdx, updateNode.intersection.get(fromIdx)+1);
-				else
-					updateNode.intersection.put(fromIdx, 1);
-				if(updateNode.intersection.containsKey(toIdx))
-					updateNode.intersection.replace(toIdx, updateNode.intersection.get(toIdx)+1);
-				else
-					updateNode.intersection.put(toIdx, 1);
-			}
+			Node updateNode = nodes.get(x);
+			if(updateNode.intersection.containsKey(fromIdx))
+				updateNode.intersection.replace(fromIdx, updateNode.intersection.get(fromIdx)+1);
+			else
+				updateNode.intersection.put(fromIdx, 1);
+		}
+		for (Integer x : from.followers) {
+			Node updateNode = nodes.get(x);
+			if(updateNode.intersection.containsKey(toIdx))
+				updateNode.intersection.replace(toIdx, updateNode.intersection.get(toIdx)+1);
+			else
+				updateNode.intersection.put(toIdx, 1);
+		}
+		for (Integer x : from.following) {
+			Node updateNode = nodes.get(x);
+			if(updateNode.intersection.containsKey(toIdx))
+				updateNode.intersection.replace(toIdx, updateNode.intersection.get(toIdx)+1);
+			else
+				updateNode.intersection.put(toIdx, 1);
 		}
 	}
 	
