@@ -119,6 +119,7 @@ public class NetworkGenerator {
 		}
 		
 		double percentDone = 0;
+		double timeSinceLast = System.currentTimeMillis();
 		while (true) {
 			
 			boolean someNeedsFollowers = false;
