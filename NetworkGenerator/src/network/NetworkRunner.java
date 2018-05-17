@@ -1,23 +1,31 @@
 package network;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
 
-import javax.imageio.ImageIO;
-import javax.naming.InitialContext;
-
-import graphing.GraphUtils;;
+import graphing.JfreeGraph;;
 
 public class NetworkRunner {
 	
-	private static int socialPressure = 0;
-	private static int minRetweets = 10;
+	private int socialPressure = 0;
+	private int minRetweets = 30;
+	private Network net;
+	
+	public NetworkRunner(int socialPressure, int minRetweets, Network net) {
+		this.socialPressure = socialPressure;
+		this.minRetweets = minRetweets;
+		this.net = net;
+	}
+	
+	public NetworkRunner(int socialPressure, int minRetweets, String networkDirectory) throws IOException {
+		this.socialPressure = socialPressure;
+		this.minRetweets = minRetweets;
+		this.net = new Network(networkDirectory);
+	}
 	
 	public void tweet(Node user, boolean[] hasTweeted, int[] numSeen, int[] lastSeen, int ts) {
 		hasTweeted[user.id] = true;
@@ -54,7 +62,8 @@ public class NetworkRunner {
 		
 		int step = 1;
 		int count = 0;
-		double baseProb = .02;
+		double baseProb = .01;
+		int totalTweets = 0;
 		while(count <= 5) {
 			ArrayList<Node> toTweet = new ArrayList<Node>();
 			for(int i = 0; i < net.size; i++) {
@@ -70,6 +79,7 @@ public class NetworkRunner {
 				
 				if (r < prob) {
 					toTweet.add(net.getNodeById(i));
+					totalTweets++;
 				} 
 			}
 			tweet(toTweet, hasTweeted, numSeen, lastSeen, step);
@@ -81,14 +91,14 @@ public class NetworkRunner {
 				count = 0;
 			step++;
 		}
-		
 		return timeSteps;
 	}
 
-	public void saveRun(Network net, ArrayList<ArrayList<Node>> timeSteps, String outputDir) throws FileNotFoundException {
-		System.out.println("Saving Run...");
+	public void saveRun(ArrayList<ArrayList<Node>> timeSteps, String outputDir) throws Exception {
 		String runID = UUID.randomUUID().toString();
 		String dir = outputDir + runID + "/";
+		
+		
 		
 		if (!new File(dir).exists()) {
 			new File(dir).mkdirs();
@@ -102,9 +112,8 @@ public class NetworkRunner {
 			data[i] = count;
 		}
 		
-		GraphUtils runDataGraph = new GraphUtils(data);
-		runDataGraph.savePlot(dir + "cumulative.png");
-		
+		JfreeGraph runDataGraph = new JfreeGraph(runID, data);
+		runDataGraph.saveGraph(dir+"cumulative.png");
 		
 		//Iterative graph data
 		data = new int[timeSteps.size()];
@@ -113,18 +122,20 @@ public class NetworkRunner {
 			data[i] = timeSteps.get(i).size();
 		}
 		
-		runDataGraph = new GraphUtils(data);
-		runDataGraph.savePlot(dir + "stepByStep.png");
+		runDataGraph = new JfreeGraph(runID, data);
+		runDataGraph.saveGraph(dir+"iterative.png");
 		
 		//follower graph data
 		data = new int[timeSteps.size()];
 		count = 0;
 		for(int i = 0; i < timeSteps.size(); i++) {
-			data[i] = net.getNodeById(i).num_followers;
+			for(Node n : timeSteps.get(i)) {
+				data[i] =+ n.num_followers;
+			}
 		}
 		
-		runDataGraph = new GraphUtils(data);
-		runDataGraph.savePlot(dir + "followers.png");
+		runDataGraph = new JfreeGraph(runID, data);
+		runDataGraph.saveGraph(dir+"followers.png");
 		
 		
 		
@@ -137,30 +148,22 @@ public class NetworkRunner {
 		}
 		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
 		out.write(timeStepsString);
-		
-		System.out.println("Done");
+		out.close();
 	}
+
 	
-	public void runMultiple(Network net, int iterations, String outputDir) throws FileNotFoundException {
+	public void runMultiple(int iterations, String outputDir) throws Exception {
 		for (int i = 0; i < iterations; i++) {
+			System.out.println(i);
 			ArrayList<ArrayList<Node>> timeSteps = null;
 			while(true) {
 				timeSteps = run(net);
-				if(timeSteps.size() > minRetweets)
+				if(timeSteps.size() > minRetweets) {
 					break;
+				}
 			}
-			System.out.println(timeSteps.size());
-			
-			saveRun(net, timeSteps, outputDir);
+			saveRun(timeSteps, outputDir);
 		}
-	}
-	
-	public static void main(String[] args) throws IOException {
-		String dir = "100000_lowClustering/";
-		Network net = new Network(dir + "nodes.csv", dir + "edges.csv");
-		
-		NetworkRunner runner = new NetworkRunner();
-		runner.runMultiple(net, 2, "100000_lowClustering/");
 	}
 	
 }
