@@ -94,12 +94,16 @@ public class NetworkGenerator {
 			// num_following/max_num_following
 			double deduct = 10 * ((double) currNode.following.size() / (double) currNode.num_following);
 			weights[i] = weights[i] - Math.min(deduct, 9); // minimum 10% chance of connecting
-
-			int intersection = 0;
-			if (currNode.intersection.containsKey(i)){
-				intersection = currNode.intersection.get(i);
+			
+			if(i/100 - index/100 == 0) {
+				weights[i] = weights[i]*clusteringWeight;
 			}
-			weights[i] = weights[i] * (1 + intersection) * clusteringWeight;
+
+			//int intersection = 0;
+			//if (currNode.intersection.containsKey(i)){
+			//	intersection = currNode.intersection.get(i);
+			//}
+			//weights[i] = weights[i] * (1 + intersection) * clusteringWeight;
 		}
 
 		return weights;
@@ -140,14 +144,16 @@ public class NetworkGenerator {
 				nodes.get(newFollower).following.add(currNode.id);
 				followersAvailable[i] = currNode.followers.size() < currNode.num_followers;
 				
-				if(percentDone <= rndmFillPercent) {
-					updateIntersections(nodes, newFollower, i);
-				}
+				//if(percentDone <= rndmFillPercent|| currNode.num_followers > 2000) {
+				//	updateIntersections(nodes, newFollower, i);
+				//}
 				
 				numDone += 1;
 				if (numDone % (int) (totalFollowers / 100) == 0) {
 					percentDone = numDone / totalFollowers;
-					System.out.println((int) (numDone / totalFollowers * 100) + "%");
+					double currTime = System.currentTimeMillis();
+					System.out.println((int) (numDone / totalFollowers * 100) + "% ... " + (currTime - timeSinceLast));
+					timeSinceLast = currTime;
 				}
 
 			}
