@@ -86,13 +86,13 @@ public class NetworkGenerator {
 		for (int i = 0; i < nodes.size(); i++) {
 			Node currNode = nodes.get(i);
 
-			if (i == index || baseNode.followers.contains(i)) {
-				weights[i] = 0;
-				continue;
-			}
+//			if (i == index || baseNode.followers.contains(i)) {
+//				weights[i] = 0;
+//				continue;
+//			}
 
 			// num_following/max_num_following
-			double deduct = 10 * ((double) currNode.following.size() / (double) currNode.num_following);
+			double deduct = 10 * ((double) currNode.getCurrentNumFollowing() / (double) currNode.max_following);
 			weights[i] = weights[i] - Math.min(deduct, 9); // minimum 10% chance of connecting
 			
 			if(i/100 - index/100 == 0) {
@@ -115,11 +115,12 @@ public class NetworkGenerator {
 
 		for(int i = 0; i < nodes.size(); i++) {
 			Node currNode = nodes.get(i);
-			followersAvailable[i] = currNode.followers.size() < currNode.num_followers;
+			followersAvailable[i] = currNode.getCurrentNumFollowers() < currNode.max_followers;
 		}
 		
 		double percentDone = 0;
 		double timeSinceLast = System.currentTimeMillis();
+		int level = 0;
 		while (true) {
 			
 			boolean someNeedsFollowers = false;
@@ -133,17 +134,22 @@ public class NetworkGenerator {
 				
 				Node currNode = nodes.get(i);
 				
+				int newFollower = -1;
 				double[] weights = new double[nodes.size()];
-				if(percentDone <= rndmFillPercent)
-					 weights = genEdgeWeights(nodes, i, clusteringWeight);
-				else
-					Arrays.fill(weights, 1);
-				
-				int newFollower = weighted_choice(weights);
-				
-				currNode.followers.add(newFollower);
-				nodes.get(newFollower).following.add(currNode.id);
-				followersAvailable[i] = currNode.followers.size() < currNode.num_followers;
+				while(true) {				
+					if(percentDone <= rndmFillPercent)
+						 weights = genEdgeWeights(nodes, i, clusteringWeight);
+					else
+						Arrays.fill(weights, 1);
+					
+					newFollower = weighted_choice(weights);
+					if(nodes.get(newFollower).follow(currNode.id)) {
+						currNode.getFollowedBy(newFollower);
+						followersAvailable[i] = currNode.getCurrentNumFollowers() < currNode.max_followers;
+						break;
+					}
+					//System.out.println("redo");
+				}
 				
 				//if(percentDone <= rndmFillPercent|| currNode.num_followers > 2000) {
 				//	updateIntersections(nodes, newFollower, i);
@@ -153,49 +159,16 @@ public class NetworkGenerator {
 				if (numDone % (int) (totalFollowers / 100) == 0) {
 					percentDone = numDone / totalFollowers;
 					double currTime = System.currentTimeMillis();
-					System.out.println((int) (numDone / totalFollowers * 100) + "% ... " + (currTime - timeSinceLast));
+					System.out.println((int) (numDone / totalFollowers * 100) + "% ... " + (currTime - timeSinceLast)
+							+ " ... " + level);
 					timeSinceLast = currTime;
 				}
 
 			}
-			
+			level++;
 			if(!someNeedsFollowers) {
 				return true;
 			}
-		}
-	}
-
-	public void updateIntersections(ArrayList<Node> nodes, int fromIdx, int toIdx) {
-		Node from = nodes.get(fromIdx);
-		Node to = nodes.get(toIdx);
-		
-		for (Integer x : to.followers) {
-			Node updateNode = nodes.get(x);
-			if(updateNode.intersection.containsKey(fromIdx))
-				updateNode.intersection.replace(fromIdx, updateNode.intersection.get(fromIdx)+1);
-			else
-				updateNode.intersection.put(fromIdx, 1);
-		}
-		for (Integer x : to.following) {
-			Node updateNode = nodes.get(x);
-			if(updateNode.intersection.containsKey(fromIdx))
-				updateNode.intersection.replace(fromIdx, updateNode.intersection.get(fromIdx)+1);
-			else
-				updateNode.intersection.put(fromIdx, 1);
-		}
-		for (Integer x : from.followers) {
-			Node updateNode = nodes.get(x);
-			if(updateNode.intersection.containsKey(toIdx))
-				updateNode.intersection.replace(toIdx, updateNode.intersection.get(toIdx)+1);
-			else
-				updateNode.intersection.put(toIdx, 1);
-		}
-		for (Integer x : from.following) {
-			Node updateNode = nodes.get(x);
-			if(updateNode.intersection.containsKey(toIdx))
-				updateNode.intersection.replace(toIdx, updateNode.intersection.get(toIdx)+1);
-			else
-				updateNode.intersection.put(toIdx, 1);
 		}
 	}
 	
@@ -204,7 +177,7 @@ public class NetworkGenerator {
 		
 		net.nodes = genNodes(size);
 		for (Node n : net.nodes) {
-			totalFollowers += n.num_followers;
+			totalFollowers += n.max_followers;
 		}
 		net.size = net.nodes.size();
 		genEdges(net.nodes, rndmFillPercent, clusteringWeight);

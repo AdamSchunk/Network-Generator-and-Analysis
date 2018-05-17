@@ -42,7 +42,9 @@ public class Network {
 				String[] data = line.split(",");
 				int fromIdx = Integer.parseInt(data[0]);
 				int toIdx = Integer.parseInt(data[1]);
-				getNodeById(fromIdx).followers.add(toIdx);
+				getNodeById(fromIdx).getFollowedBy(toIdx);
+				getNodeById(toIdx).follow(fromIdx);
+				
 			}
         }
         this.size = nodes.size();
@@ -53,7 +55,7 @@ public class Network {
 		System.out.println("saving data");
 		FileWriter nodeWriter = new FileWriter(dir + "nodes.csv");
 		for (Node n : nodes) {
-			String output = n.id + "," + n.num_followers + "," + n.num_following + "\n";
+			String output = n.id + "," + n.max_followers + "," + n.max_following + "\n";
 			nodeWriter.write(output);
 		}
 		nodeWriter.close();
@@ -63,7 +65,7 @@ public class Network {
 		String res = "from,to,weight\n";
 		edgeWriter.write(res);
 		for (Node node : nodes) {
-			for (Integer follower : node.followers) {
+			for (Integer follower : node.getFollowersIds()) {
 				res = node.id + "," + follower + ",1\n";
 				edgeWriter.write(res);
 			}

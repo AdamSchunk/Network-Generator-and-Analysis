@@ -30,7 +30,7 @@ public class NetworkRunner {
 	public void tweet(Node user, boolean[] hasTweeted, int[] numSeen, int[] lastSeen, int ts) {
 		hasTweeted[user.id] = true;
 		
-		for(int id : user.followers) {
+		for(int id : user.getFollowersIds()) {
 			numSeen[id]++;
 			lastSeen[id] = ts;
 		}
@@ -136,7 +136,7 @@ public class NetworkRunner {
 		count = 0;
 		for(int i = 0; i < timeSteps.size(); i++) {
 			for(Node n : timeSteps.get(i)) {
-				data[i] =+ n.num_followers;
+				data[i] =+ n.max_followers;
 			}
 		}
 		

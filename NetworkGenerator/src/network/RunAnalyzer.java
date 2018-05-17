@@ -60,7 +60,7 @@ public class RunAnalyzer {
 		ArrayList<ArrayList<Node>> windows = new ArrayList<ArrayList<Node>>();
 		
 		for(Node n : net.nodes) { //for each node generate a window from each run
-			if(n.num_followers < 100 || n.num_followers > 2000)
+			if(n.max_followers < 100 || n.max_followers > 2000)
 				continue;
 			//System.out.println(n.id);
 			int[] window = new int[net.size];
@@ -81,7 +81,7 @@ public class RunAnalyzer {
 					for(int j = back; j < front; j++) {
 						ArrayList<Node> tsInWindow = timeSteps.get(j);
 						for (Node nodeInWindow : tsInWindow) {
-							if(n.num_followers < 100 || n.num_followers > 2000)
+							if(n.max_followers < 100 || n.max_followers > 2000)
 								continue;
 							window[nodeInWindow.id]++;
 						}
