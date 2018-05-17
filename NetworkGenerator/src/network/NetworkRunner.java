@@ -11,17 +11,17 @@ import graphing.JfreeGraph;;
 
 public class NetworkRunner {
 	
-	private int socialPressure = 0;
+	private double socialPressure = 0;
 	private int minRetweets = 30;
 	private Network net;
 	
-	public NetworkRunner(int socialPressure, int minRetweets, Network net) {
+	public NetworkRunner(double socialPressure, int minRetweets, Network net) {
 		this.socialPressure = socialPressure;
 		this.minRetweets = minRetweets;
 		this.net = net;
 	}
 	
-	public NetworkRunner(int socialPressure, int minRetweets, String networkDirectory) throws IOException {
+	public NetworkRunner(double socialPressure, int minRetweets, String networkDirectory) throws IOException {
 		this.socialPressure = socialPressure;
 		this.minRetweets = minRetweets;
 		this.net = new Network(networkDirectory);
@@ -63,6 +63,8 @@ public class NetworkRunner {
 		int step = 1;
 		int count = 0;
 		double baseProb = .01;
+		if(socialPressure >= 2)
+			baseProb = baseProb/socialPressure + baseProb/2;
 		int totalTweets = 0;
 		while(count <= 5) {
 			ArrayList<Node> toTweet = new ArrayList<Node>();
@@ -73,9 +75,13 @@ public class NetworkRunner {
 				double r = rand.nextDouble();
 				double time_past = step - lastSeen[i];
 				
-				double prob = baseProb/(time_past*2);
+				double prob = baseProb/(time_past*3);
 
-				//TODO: add social pressure influence
+				if(socialPressure >= 2) {
+					double pressure = Math.min(numSeen[i]*socialPressure/10+1, socialPressure);
+					prob = prob*pressure;
+				}
+				
 				
 				if (r < prob) {
 					toTweet.add(net.getNodeById(i));
@@ -156,10 +162,12 @@ public class NetworkRunner {
 			System.out.println(i);
 			ArrayList<ArrayList<Node>> timeSteps = null;
 			while(true) {
+				//System.out.println("running");
 				timeSteps = run(net);
 				if(timeSteps.size() > minRetweets) {
 					break;
 				}
+				//System.out.println("bad run");
 			}
 			saveRun(timeSteps, outputDir);
 		}
