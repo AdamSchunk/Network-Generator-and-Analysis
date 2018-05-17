@@ -19,7 +19,7 @@ public class NetworkGenerator {
 		}
 
 		Random rand = new Random();
-		int choice = (int) (rand.nextDouble() * (total)+1);
+		double choice = rand.nextDouble() * (total);
 
 		double upto = 0;
 		for (int i = 0; i < weights.length; i++) {
@@ -31,6 +31,7 @@ public class NetworkGenerator {
 		}
 		System.out.println(upto);
 		System.out.println(choice);
+		System.out.println(Arrays.toString(weights));
 		System.out.println("Should not see this");
 		System.exit(0);
 		return 0;
