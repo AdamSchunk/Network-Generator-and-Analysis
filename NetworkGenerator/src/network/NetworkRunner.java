@@ -30,7 +30,7 @@ public class NetworkRunner {
 	public void tweet(Node user, boolean[] hasTweeted, int[] numSeen, int[] lastSeen, int ts) {
 		hasTweeted[user.id] = true;
 		
-		for(int id : user.getFollowersIds()) {
+		for(int id : user.getFollowerIds()) {
 			numSeen[id]++;
 			lastSeen[id] = ts;
 		}

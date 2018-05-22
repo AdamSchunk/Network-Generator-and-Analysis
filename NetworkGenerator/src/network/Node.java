@@ -27,7 +27,7 @@ public class Node {
 		this.intersection = new HashMap<Integer, Integer>();
 	}
 	
-	public ArrayList<Integer> getFollowersIds() {
+	public ArrayList<Integer> getFollowerIds() {
 		return followers;
 	}
 	

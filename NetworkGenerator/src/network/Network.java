@@ -65,7 +65,7 @@ public class Network {
 		String res = "from,to,weight\n";
 		edgeWriter.write(res);
 		for (Node node : nodes) {
-			for (Integer follower : node.getFollowersIds()) {
+			for (Integer follower : node.getFollowerIds()) {
 				res = node.id + "," + follower + ",1\n";
 				edgeWriter.write(res);
 			}
