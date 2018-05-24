@@ -11,6 +11,7 @@ import java.util.List;
 public class NetworkGenerator {
 	double totalFollowers = 0;
 	double numDone = 0;
+	double clusteringFollowerDegeneration = 10;
 	
 	public int weighted_choice(double[] weights) {
 		double total = 0;
@@ -76,45 +77,37 @@ public class NetworkGenerator {
 		System.out.println("Done");
 		return nodes;
 	}
-
-	public double[] genEdgeWeights(ArrayList<Node> nodes, int index, int clusteringWeight) {
-		double[] weights = new double[nodes.size()];
+	
+	public double[] genEdgeWeights(Network net, int index, int clusteringWeight) {
+		double[] weights = new double[net.size];
 		Arrays.fill(weights, 10);
 
-		Node baseNode = nodes.get(index);
+		Node baseNode = net.getNodeById(index);
+		//baseNode.getClustering(net);
+		for (int i = 0; i < net.size; i++) {
+			Node currNode = net.getNodeById(i);
 
-		for (int i = 0; i < nodes.size(); i++) {
-			Node currNode = nodes.get(i);
-
-//			if (i == index || baseNode.followers.contains(i)) {
-//				weights[i] = 0;
-//				continue;
-//			}
 
 			// num_following/max_num_following
 			double deduct = 10 * ((double) currNode.getCurrentNumFollowing() / (double) currNode.max_following);
 			weights[i] = weights[i] - Math.min(deduct, 9); // minimum 10% chance of connecting
 			
-			if(i/100 - index/100 == 0) {
+			int clusterSize = 10 + 500*(baseNode.max_followers/1000);
+			
+			if(i/clusterSize - index/clusterSize == 0) {
 				weights[i] = weights[i]*clusteringWeight;
 			}
-
-			//int intersection = 0;
-			//if (currNode.intersection.containsKey(i)){
-			//	intersection = currNode.intersection.get(i);
-			//}
-			//weights[i] = weights[i] * (1 + intersection) * clusteringWeight;
 		}
 
 		return weights;
 	}
 
-	public boolean genEdges(ArrayList<Node> nodes, double rndmFillPercent, int clusteringWeight) {
-		Boolean[] followersAvailable = new Boolean[nodes.size()];
+	public boolean genEdges(Network net, double rndmFillPercent, int clusteringWeight) {
+		Boolean[] followersAvailable = new Boolean[net.size];
 		Arrays.fill(followersAvailable, Boolean.TRUE);
 
-		for(int i = 0; i < nodes.size(); i++) {
-			Node currNode = nodes.get(i);
+		for(int i = 0; i < net.size; i++) {
+			Node currNode = net.getNodeById(i);
 			followersAvailable[i] = currNode.getCurrentNumFollowers() < currNode.max_followers;
 		}
 		
@@ -125,25 +118,25 @@ public class NetworkGenerator {
 			
 			boolean someNeedsFollowers = false;
 
-			for (int i = 0; i < nodes.size(); i++) {
+			for (int i = 0; i < net.size; i++) {
 				if (!followersAvailable[i])
 					continue;
 				else
 					someNeedsFollowers = true;
 				
 				
-				Node currNode = nodes.get(i);
+				Node currNode = net.getNodeById(i);
 				
 				int newFollower = -1;
-				double[] weights = new double[nodes.size()];
+				double[] weights = new double[net.size];
 				while(true) {				
 					if(percentDone <= rndmFillPercent)
-						 weights = genEdgeWeights(nodes, i, clusteringWeight);
+						 weights = genEdgeWeights(net, i, clusteringWeight);
 					else
 						Arrays.fill(weights, 1);
 					
 					newFollower = weighted_choice(weights);
-					if(nodes.get(newFollower).follow(currNode.id)) {
+					if(net.getNodeById(newFollower).follow(currNode.id)) {
 						currNode.getFollowedBy(newFollower);
 						followersAvailable[i] = currNode.getCurrentNumFollowers() < currNode.max_followers;
 						break;
@@ -180,7 +173,7 @@ public class NetworkGenerator {
 			totalFollowers += n.max_followers;
 		}
 		net.size = net.nodes.size();
-		genEdges(net.nodes, rndmFillPercent, clusteringWeight);
+		genEdges(net, rndmFillPercent, clusteringWeight);
 		net.saveNetwork(dir);
 		return net;
 	}
