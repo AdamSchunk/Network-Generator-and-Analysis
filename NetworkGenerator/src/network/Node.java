@@ -1,6 +1,7 @@
 package network;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Node {
 	int max_followers = 0;
@@ -11,7 +12,29 @@ public class Node {
 	private ArrayList<Integer> following = new ArrayList<>();
 	Map<Integer, Integer> intersection;
 	
-	
+	public double getClustering(Network net) {
+		double linksInSubgraph = 0;
+		ArrayList<Integer> subgraph = new ArrayList<Integer>();
+		subgraph.add(this.id);
+		for(Integer followerId : this.getFollowerIds()) {
+			subgraph.add(followerId);
+		}
+		
+		for(Integer followingId : this.getFollowingIds()) {
+			if (!subgraph.contains(followingId))
+				subgraph.add(followingId);
+		}
+		
+		double denom = subgraph.size() * (subgraph.size() -1);
+		
+		for(Integer nodeIdInSubgraph : subgraph) {
+			Node nodeInSubgraph = net.getNodeById(nodeIdInSubgraph);
+			List<Integer> intersectFollowers = subgraph.stream().filter(
+					nodeInSubgraph.getFollowerIds()::contains).collect(Collectors.toList());
+			linksInSubgraph += intersectFollowers.size();
+		}
+		return linksInSubgraph/denom;
+	}
 	
 	public Node(int followers, int following) {
 		this(followers, following, numNodes);
