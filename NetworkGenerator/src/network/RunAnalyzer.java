@@ -32,8 +32,8 @@ public class RunAnalyzer {
 		return timeSteps;
 	}
 	
-	public void countOccurances() throws FileNotFoundException {
-		File[] runDirectories = new File(runDirectory).listFiles(File::isDirectory);
+	public void countOccurances(String runDir) throws FileNotFoundException {
+		File[] runDirectories = new File(runDir).listFiles(File::isDirectory);
 		int[] occurances = new int[net.size];
 		int totalTweets = 0;
 		for(File f : runDirectories) {
@@ -47,7 +47,7 @@ public class RunAnalyzer {
 		}
 		int i = 0;
 		for(int occurance : occurances) {
-			if(occurance > 100 ) {
+			if(occurance > 200 ) {
 				System.out.println(i + ": " + occurance);	
 			}
 			i++;
