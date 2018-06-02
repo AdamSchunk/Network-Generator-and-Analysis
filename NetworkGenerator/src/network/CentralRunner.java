@@ -1,6 +1,7 @@
 package network;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class CentralRunner {
 	public static void main(String[] args) throws Exception {
@@ -26,14 +27,17 @@ public class CentralRunner {
 		
 		//social pressure of 0 or 1 have no effect, 
 		//higher numbers mean lower base prob of tweet but more effect from seen.
-		int numRuns = 500;
-		double socialPressure = 0;
-		int minRetweets = 400;
-		NetworkRunner runner = new NetworkRunner(socialPressure, minRetweets, networkDir);
-		runner.runMultiple(numRuns, outputDir);
+//		int numRuns = 500;
+//		double socialPressure = 0;
+//		int minRetweets = 400;
+//		NetworkRunner runner = new NetworkRunner(socialPressure, minRetweets, networkDir);
+//		runner.runMultiple(numRuns, outputDir);
+		
 
-//		RunAnalyzer ra = new RunAnalyzer(networkDir);
-//		ra.findClusters();
+		RunAnalyzer ra = new RunAnalyzer(networkDir, outputDir);
+//		ra.smoothIterative();
 //		ra.countOccurances(outputDir);
+		ra.findClusters();
+		
 	}
 }

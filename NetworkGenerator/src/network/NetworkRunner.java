@@ -4,10 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 
-import graphing.JfreeGraph;;
+import graphing.JfreeGraph;
 
 public class NetworkRunner {
 	
@@ -78,7 +79,7 @@ public class NetworkRunner {
 				double prob = baseProb/(time_past*3);
 
 				if(socialPressure >= 2) {
-					double pressure = Math.min(numSeen[i]*socialPressure/10+1, socialPressure);
+					double pressure = Math.min(numSeen[i]*socialPressure/20+1, socialPressure);
 					prob = prob*pressure;
 				}
 				
@@ -136,25 +137,36 @@ public class NetworkRunner {
 		count = 0;
 		for(int i = 0; i < timeSteps.size(); i++) {
 			for(Node n : timeSteps.get(i)) {
-				data[i] =+ n.max_followers;
+				data[i] =+ n.max_followers/timeSteps.get(i).size();
 			}
 		}
 		
 		runDataGraph = new JfreeGraph(runID, data);
-		runDataGraph.saveGraph(dir+"followers.png");
+		runDataGraph.saveGraph(dir+"followersInTsAverage.png");
 		
 		
 		
 		String timeStepsString = "";
-		for (ArrayList<Node> ts : timeSteps) {
+		int[] runKey = new int[net.size];
+		Arrays.fill(runKey, -1);
+		for (int i = 0; i < timeSteps.size(); i++) {
+			ArrayList<Node> ts = timeSteps.get(i);
 			for (Node n : ts) {
 				timeStepsString += n.id + " ";
+				runKey[n.id] = i;
 			}
 			timeStepsString += "\n";
 		}
 		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
 		out.write(timeStepsString);
 		out.close();
+		
+		out = new PrintWriter(dir + "runKey.csv");
+		out.write(Arrays.toString(runKey));
+		out.close();
+		
+		
+		
 	}
 
 	public void runMultiple(int iterations, String outputDir) throws Exception {
