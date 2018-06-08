@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import graphing.JfreeGraph;
+import math.ExponentialMovingAverage;
 
 public class NetworkRunner {
 	
@@ -111,58 +112,51 @@ public class NetworkRunner {
 			new File(dir).mkdirs();
 		}
 		
-		//Cumulative graph data
-		int[] data = new int[timeSteps.size()];
+		int[] cumulativeData = new int[timeSteps.size()];
+		int[] iterativeData = new int[timeSteps.size()];
+		int[] averageFollowerTimestep = new int[timeSteps.size()];
+		int[] runKey = new int[net.size];
+		String timeStepsString = "";
 		int count = 0;
 		for(int i = 0; i < timeSteps.size(); i++) {
-			count += timeSteps.get(i).size();
-			data[i] = count;
-		}
-		
-		JfreeGraph runDataGraph = new JfreeGraph(runID, data);
-		runDataGraph.saveGraph(dir+"cumulative.png");
-		
-		//Iterative graph data
-		data = new int[timeSteps.size()];
-		count = 0;
-		for(int i = 0; i < timeSteps.size(); i++) {
-			data[i] = timeSteps.get(i).size();
-		}
-		
-		runDataGraph = new JfreeGraph(runID, data);
-		runDataGraph.saveGraph(dir+"iterative.png");
-		
-		//follower graph data
-		data = new int[timeSteps.size()];
-		count = 0;
-		for(int i = 0; i < timeSteps.size(); i++) {
-			for(Node n : timeSteps.get(i)) {
-				data[i] =+ n.max_followers/timeSteps.get(i).size();
-			}
-		}
-		
-		runDataGraph = new JfreeGraph(runID, data);
-		runDataGraph.saveGraph(dir+"followersInTsAverage.png");
-		
-		
-		
-		String timeStepsString = "";
-		int[] runKey = new int[net.size];
-		Arrays.fill(runKey, -1);
-		for (int i = 0; i < timeSteps.size(); i++) {
 			ArrayList<Node> ts = timeSteps.get(i);
-			for (Node n : ts) {
+			count += ts.size();
+			cumulativeData[i] = count;
+			iterativeData[i] = ts.size();
+			for(Node n : ts) {
+				averageFollowerTimestep[i] =+ n.max_followers/ts.size();
 				timeStepsString += n.id + " ";
 				runKey[n.id] = i;
 			}
-			timeStepsString += "\n";
+			timeStepsString += "\n";  
 		}
+		
+		double[] smoothIterative = new double[timeSteps.size()];
+		ExponentialMovingAverage ema = new ExponentialMovingAverage(.25);
+		smoothIterative = ema.average(Arrays.stream(iterativeData).asDoubleStream().toArray());
+		
+		JfreeGraph runDataGraph = new JfreeGraph(runID, cumulativeData);
+		runDataGraph.saveGraph(dir+"cumulative.png");
+		
+		runDataGraph = new JfreeGraph(runID, iterativeData);
+		runDataGraph.saveGraph(dir+"iterative.png");
+		
+		runDataGraph = new JfreeGraph(runID, smoothIterative);
+		runDataGraph.saveGraph(dir+"smoothIterative.png");
+		
+		runDataGraph = new JfreeGraph(runID, averageFollowerTimestep);
+		runDataGraph.saveGraph(dir+"followersInTsAverage.png");
+		
 		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
 		out.write(timeStepsString);
 		out.close();
 		
 		out = new PrintWriter(dir + "runKey.csv");
 		out.write(Arrays.toString(runKey));
+		out.close();
+		
+		out = new PrintWriter(dir + "smoothIterative.csv");
+		out.write(Arrays.toString(smoothIterative));
 		out.close();
 		
 		

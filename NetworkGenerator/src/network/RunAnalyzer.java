@@ -25,26 +25,6 @@ public class RunAnalyzer {
 		this.net = new Network(netDirectory);
 	}
 	
-	public void smoothIterative() throws IOException {
-		ExponentialMovingAverage ema = new ExponentialMovingAverage(.5);
-		String dir = "100000_cluster1000\\socialPressure0\\006be68e-7fe1-45fa-8193-965f0548ce20\\timeSteps.csv";
-		ArrayList<ArrayList<Node>> timeSteps = loadTimeSteps(dir);
-		
-//		double[] timeStepSize = new double[timeSteps.size()];
-//		for(int i = 0; i < timeSteps.size(); i++) {
-//			for(Node n : timeSteps.get(i)) {
-//				System.out.println(n.id);
-//			}
-//			System.out.println();
-//			timeStepSize[i] = timeSteps.get(i).size();
-//		}
-//		
-//		double[] averaged = ema.average(timeStepSize);
-//		
-//		JfreeGraph runDataGraph = new JfreeGraph("averaged iterative", timeStepSize);
-//		runDataGraph.saveGraph("100000_cluster1000\\socialPressure0\\006be68e-7fe1-45fa-8193-965f0548ce20\\average.png");
-	}
-	
 	public void countOccurances(String runDir) throws Exception {
 		File[] runDirectories = new File(runDir).listFiles(File::isDirectory);
 		int[] occurances = new int[net.size];
@@ -71,7 +51,22 @@ public class RunAnalyzer {
 		}
 	}
 	
-	public void findClusters() throws Exception {
+	public void findClustersByRingingThresh() {
+		File[] runDirectories = new File(runDirectory).listFiles(File::isDirectory);
+		ArrayList<ArrayList<Node>> windows = new ArrayList<ArrayList<Node>>();
+		
+		for(Node n : net.nodes) { //for each node generate a window from all the runs
+			if(n.max_followers > 500)
+				continue;
+			int[] window = new int[net.size];
+			int numTimesSeen = 0;
+			for(File f : runDirectories) { //for each run find the nodes that tweeted around our base node
+				
+			}
+		}
+	}
+	
+	public void findClustersByWindow() throws Exception {
 		File[] runDirectories = new File(runDirectory).listFiles(File::isDirectory);
 		ArrayList<ArrayList<Node>> windows = new ArrayList<ArrayList<Node>>();
 		
@@ -166,6 +161,8 @@ public class RunAnalyzer {
 		}
 		return runKey;
 	}
+	
+	
 	
 	/*
 	 * removes any nodes that are seen less than a 
