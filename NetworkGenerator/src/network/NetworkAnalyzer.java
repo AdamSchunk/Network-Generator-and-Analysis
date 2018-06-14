@@ -18,7 +18,23 @@ public class NetworkAnalyzer {
 		this.netDirectory = runDirecroty;
 		this.net = new Network(runDirecroty);
 	}
+	
+	public void saveNodeDistribution() throws IOException{
+		double[] degrees = new double[net.size];
+		for(int i = 0; i < net.size; i++) {
+			Node n = net.nodes.get(i);
+			degrees[i] = Math.log10(n.max_followers);
+		}
+		Arrays.sort(degrees);
 		
+		JfreeGraph runDataGraph = new JfreeGraph("log network degree" , degrees);
+		runDataGraph.saveGraph(netDirectory+"overall network degree log.png");
+	}
+	
+	public void getSubgraphClustering(Network subgraph) {
+		
+	}
+	
 	public void saveClustering() throws IOException {
 		double[] clusterVals = new double[net.nodes.size()];
 		double[] followerVals = new double[net.nodes.size()];
