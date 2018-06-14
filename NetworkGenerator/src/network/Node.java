@@ -58,15 +58,24 @@ public class Node {
 		return following;
 	}
 	
-	public boolean follow(int id) {
+	public boolean follow(Node nodeToFollow) {
+		int id = nodeToFollow.id;
 		if(following.contains(id)) {
 			return false;
 		}
 		following.add(id);
+		nodeToFollow.getFollowedBy(this);
 		return true;
 	}
 	
-	public boolean getFollowedBy(int id) {
+	public boolean follow(List<Node> nodes) {
+		for(Node n : nodes)
+			follow(n);
+		return true;
+	}
+	
+	private boolean getFollowedBy(Node followedBy) {
+		int id = followedBy.id;
 		if(followers.contains(id)) {
 			return false;
 		}
