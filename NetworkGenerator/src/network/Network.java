@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Stream;
+
+import listUtils.ListUtils;
 
 public class Network {
 	
@@ -42,13 +45,39 @@ public class Network {
 				String[] data = line.split(",");
 				int fromIdx = Integer.parseInt(data[0]);
 				int toIdx = Integer.parseInt(data[1]);
-				getNodeById(fromIdx).getFollowedBy(toIdx);
-				getNodeById(toIdx).follow(fromIdx);
+				getNodeById(toIdx).follow(getNodeById(fromIdx));
 				
 			}
         }
         this.size = nodes.size();
         System.out.println("Network Loaded");
+	}
+	
+	public Network getSubgraphD(List<Double> ids) {
+		List<Integer> idList = new ArrayList<Integer>();
+		for(Double id : ids)
+			idList.add(id.intValue());
+		
+		return getSubgraphI(idList);
+	}
+	
+	public Network getSubgraphI(List<Integer> ids) {
+		ListUtils listUtils = new ListUtils();
+		Network subgraph = new Network();
+		for(int id : ids) {
+			Node baseNode = nodes.get(id);
+			Node subGraphNode = new Node(baseNode.max_followers, baseNode.max_following, id);
+			subgraph.nodes.add(subGraphNode);
+		}
+		
+		for(Node subGraphNode : subgraph.nodes) {
+			Node baseNode = nodes.get(subGraphNode.id);
+			List<Integer> idsToFollow = listUtils.intersection(ids, baseNode.getFollowingIds());
+			ArrayList<Node> nodesToFollow =  new ArrayList<Node>() {{ for (int i : idsToFollow) add(subgraph.getNodeById(i)); }};
+			subGraphNode.follow(nodesToFollow);
+		}
+		
+		return null;
 	}
 	
 	public void saveNetwork(String dir) throws IOException {
