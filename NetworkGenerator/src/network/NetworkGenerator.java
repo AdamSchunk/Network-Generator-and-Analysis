@@ -38,23 +38,28 @@ public class NetworkGenerator {
 		return 0;
 	}
 
+	private double exponential(double x, double a, double b, double c) {
+		return a*Math.exp(-b*x)+c;
+	}
+		
+	
 	public int[] nodeStatFunc() {
 		int[] stats = { 0, 0 }; // [followers, following]
 		Random rand = new Random();
 		double[] x = { .0000, .00177, .31622, 10., 177.8, 562.3 };
 		double[] y = { 100000., 10000., 1000., 100., 10., 1. };
 
-		double r = rand.nextFloat() * 562;
-		// System.out.println(r);
-		for (int i = 0; i < x.length; i++) {
-			double basket = x[i];
-			if (r < basket) {
-				double x_dis = (r - x[i - 1]) / (x[i] - x[i - 1]);
-				int followers = (int) ((x_dis * (y[i - 1] - y[i]) + y[i])) + 1;
-				stats[0] = followers;
-				break;
-			}
+		double r = rand.nextFloat()*100;
+		
+		double[] exp = {0.60428998, -0.07058309,  5.74510455};
+		
+		if(r <= 95) {
+			stats[0] = (int)exponential(r, exp[0], exp[1], exp[2]);
+		} else {
+			stats[0] = 500 + (int)exponential(rand.nextDouble()*100, exp[0], exp[1], exp[2])*10;
 		}
+		
+
 
 		if (stats[0] <= 1000) {
 			stats[1] = (int) (stats[0] * (1.2 - (stats[0] / 5000)) + 3);
@@ -136,8 +141,7 @@ public class NetworkGenerator {
 						Arrays.fill(weights, 1);
 					
 					newFollower = weighted_choice(weights);
-					if(net.getNodeById(newFollower).follow(currNode.id)) {
-						currNode.getFollowedBy(newFollower);
+					if(net.getNodeById(newFollower).follow(currNode)) {
 						followersAvailable[i] = currNode.getCurrentNumFollowers() < currNode.max_followers;
 						break;
 					}
