@@ -116,6 +116,7 @@ public class NetworkRunner {
 		int[] iterativeData = new int[timeSteps.size()];
 		int[] averageFollowerTimestep = new int[timeSteps.size()];
 		int[] runKey = new int[net.size];
+		Arrays.fill(runKey, -1);
 		String timeStepsString = "";
 		int count = 0;
 		for(int i = 0; i < timeSteps.size(); i++) {
