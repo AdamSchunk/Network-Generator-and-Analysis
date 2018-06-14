@@ -5,23 +5,30 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import graphing.JfreeGraph;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 import math.ExponentialMovingAverage;
+import listUtils.ListUtils;
 
 public class RunAnalyzer {
 	
 	String runDirectory;
+	String netDirectory;
 	Network net;
 	
 	public RunAnalyzer(String netDirectory, String runDirecroty) throws IOException {
 		this.runDirectory = runDirecroty;
+		this.netDirectory = netDirectory;
 		this.net = new Network(netDirectory);
 	}
 	
@@ -30,7 +37,7 @@ public class RunAnalyzer {
 		int[] occurances = new int[net.size];
 		int totalTweets = 0;
 		for(File f : runDirectories) {
-			int[] runKey = loadRunKey(f.getPath() + "/runKey.csv");
+			double[] runKey = loadArray(f.getPath() + "/runKey.csv");
 			for(int i = 0; i < runKey.length; i++) {
 				if(runKey[i] != -1) {
 					occurances[i]++;
@@ -50,20 +57,80 @@ public class RunAnalyzer {
 			i++;
 		}
 	}
+
 	
-	public void findClustersByRingingThresh() {
+	public void findClustersByRingingThresh() throws IOException {
 		File[] runDirectories = new File(runDirectory).listFiles(File::isDirectory);
-		ArrayList<ArrayList<Node>> windows = new ArrayList<ArrayList<Node>>();
 		
-		for(Node n : net.nodes) { //for each node generate a window from all the runs
-			if(n.max_followers > 500)
-				continue;
-			int[] window = new int[net.size];
-			int numTimesSeen = 0;
-			for(File f : runDirectories) { //for each run find the nodes that tweeted around our base node
-				
+		ArrayList<ArrayList<Double>> listOfClusters = new ArrayList<>();
+		
+		int numNodes = 0;
+		for(File f : runDirectories) { //for each run find the nodes that tweeted around our base node
+			boolean record = false;
+			double[] smoothIterative = loadArray(f.getPath() + "/smoothIterative.csv");
+			 ArrayList<ArrayList<Node>> timeSteps = loadTimeSteps(f.getPath() + "/timeSteps.csv");
+			
+			ArrayList<ArrayList<Double>> clustersInFile = new ArrayList<>();
+			ArrayList<Double> tmp = new ArrayList<>();
+			for(int i = 0; i < smoothIterative.length; i++) {
+				double val = smoothIterative[i];
+				if(!record && val > 12 && i > 50) {
+					tmp = new ArrayList<>();
+					record = true;
+					int windowSize = 5;
+					for(int j = i-windowSize; j < i; j++) {
+						for(Node n : timeSteps.get(j)) {
+							if(n != null) {
+								numNodes++;
+								tmp.add((double)n.id);
+							}
+						}
+					}
+					if(tmp.size() < 500)
+						clustersInFile.add(tmp);
+				} else if(record && val < 3) {
+					record = false;
+				}
 			}
+			if(clustersInFile.size() != 0)
+				clustersInFile.remove(0);
+			listOfClusters.addAll(clustersInFile);
 		}
+		
+		System.out.println(numNodes);
+		
+		
+		
+		String outStr = "";
+		Set<Double> nodeIdSet = new HashSet<Double>();
+		for(int i = 0; i < listOfClusters.size(); i++) {
+			ArrayList<Double> cluster = listOfClusters.get(i);
+			for(Double nodeId : cluster) {
+				outStr += nodeId.intValue() + " ";
+				//System.out.println(nodeId);
+				nodeIdSet.add(nodeId);
+			}
+			outStr += "\n";
+		}
+		
+		Double[] nodeIdsD = nodeIdSet.toArray(new Double[nodeIdSet.size()]);
+		
+		double[] degrees = new double[nodeIdsD.length];
+		for(int i = 0; i < degrees.length; i++) {
+			degrees[i] = Math.log10(net.getNodeById((int)nodeIdsD[i].doubleValue()).max_followers);
+		}
+		Arrays.sort(degrees);
+		
+		
+		
+		JfreeGraph runDataGraph = new JfreeGraph("log clustering degree" , degrees);
+		runDataGraph.saveGraph(netDirectory+"cluster degree log.png");
+		
+		System.out.println("finishedMakingFile");
+		
+		PrintWriter out = new PrintWriter(netDirectory + "clusters.csv");
+		out.write(outStr);
+		out.close();
 	}
 	
 	public void findClustersByWindow() throws Exception {
@@ -76,21 +143,22 @@ public class RunAnalyzer {
 			int[] window = new int[net.size];
 			int numTimesSeen = 0;
 			for(File f : runDirectories) { //for each run find the nodes that tweeted around our base node
-				int[] runKey = loadRunKey(f.getPath() + "/runKey.csv");
+				double[] runKey = loadArray(f.getPath() + "/runKey.csv");
 				if(runKey[n.id] == -1) {
 					continue;
 				}
 				numTimesSeen++;
-				int tsIndex = runKey[n.id];
+				double tsIndex = runKey[n.id];
 				
 				for(int i = 0; i < runKey.length; i++) { 	// i is node id for each node in the run key
-					int tsSeen = runKey[i];					// tsSeen is the timeStep that the node is seen
+					double tsSeen = runKey[i];					// tsSeen is the timeStep that the node is seen
 					if(Math.abs(tsSeen-tsIndex) < 30) {
 						window[i]++;
 					}
 				}
 			}
-			ArrayList<Node> strippedWindow = stripUncommonNodesInWindow(window, net, (int)(numTimesSeen*.50));
+			//System.out.println((int)(numTimesSeen));
+			ArrayList<Node> strippedWindow = stripUncommonNodesInWindow(window, net, (int)(numTimesSeen*.40));
 			windows.add(strippedWindow);
 			System.out.println(n.id + ": " + numTimesSeen);
 			if(strippedWindow.size() > 3) {
@@ -108,34 +176,29 @@ public class RunAnalyzer {
 		for(int i = 0; i < windows.size(); i++) {
 			ArrayList<Node> clusterI = new ArrayList<Node>();
 			boolean found = false;
-			for(int j = i; j < windows.size(); j++) {
-				if(j==i)
-					continue;
+			for(int j = i+1; j < windows.size(); j++) {
+				ListUtils utils = new ListUtils();
 				
-				if(overlap(windows.get(i), windows.get(j)) > 5) {
+				ArrayList<Node> overlap = new ArrayList(utils.intersection(windows.get(i), windows.get(j)));
+				if(overlap.size() > 5) {
 					if(!found) {
-						clusterI.addAll(windows.get(i));
+						clusterI = new ArrayList(utils.union(clusterI, windows.get(i)));
 						found = true;
 					}
-						clusterI.addAll(windows.get(j));	
+					clusterI = new ArrayList(utils.union(clusterI, windows.get(j)));	
 				}
 			}
 		}
 		return finalClusters;
 	}
 	
-	private int overlap(ArrayList<Node> w1, ArrayList<Node> w2) {
-		int overlap = 0;
-		return overlap;
-	}
-	
 	private ArrayList<ArrayList<Node>> loadTimeSteps(String dir) throws IOException {
 		ArrayList<ArrayList<Node>> timeSteps = new ArrayList<ArrayList<Node>>();
 		
 		try (BufferedReader br = new BufferedReader(new FileReader(dir))) {
-			ArrayList<Node> timeStep = new ArrayList<>();
 			String line;
 			while ((line = br.readLine()) != null) {
+				ArrayList<Node> timeStep = new ArrayList<>();
 				String[] data = line.split(" ");
 				for(String d : data) {
 					if(!d.isEmpty())
@@ -149,20 +212,19 @@ public class RunAnalyzer {
 		return timeSteps;
 	}
 	
-	private int[] loadRunKey(String dir) throws IOException {
-		int[] runKey = new int[net.size];
+	private double[] loadArray(String dir) throws IOException {
+		double[] runKey = new double[net.size];
 		
 		try (BufferedReader br = new BufferedReader(new FileReader(dir))) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				line = line.substring(1, line.length()-1);
-				runKey = Arrays.stream(line.split(", ")).mapToInt(Integer::parseInt).toArray();  
+				runKey = Arrays.stream(line.split(", ")).mapToDouble(Double::parseDouble).toArray();  
 		    }
 		}
 		return runKey;
 	}
-	
-	
+
 	
 	/*
 	 * removes any nodes that are seen less than a 
