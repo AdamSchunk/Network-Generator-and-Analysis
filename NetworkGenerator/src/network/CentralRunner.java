@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 public class CentralRunner {
 	public static void main(String[] args) throws Exception {
-		String networkDir = "100000_cluster1000v2/";
-		String outputDir = "100000_cluster1000v2/socialPressure0/";
+		String networkDir = "100000_cluster1000/";
+		String outputDir = "100000_cluster1000/socialPressure0/";
 
 		if (!new File(networkDir).exists()) {
 			new File(networkDir).mkdirs();
@@ -16,15 +16,16 @@ public class CentralRunner {
 			new File(outputDir).mkdirs();
 		}
 		
-		int size = 100000;
-		double rndmFillPercent = 1;
-		int clusteringWeight = 1000;
-		NetworkGenerator ng = new NetworkGenerator();
-		Network net = ng.generateNetwork(rndmFillPercent, clusteringWeight, size, networkDir);
+//		int size = 100000;
+//		double rndmFillPercent = 1;
+//		int clusteringWeight = 1000;
+//		NetworkGenerator ng = new NetworkGenerator();
+//		Network net = ng.generateNetwork(rndmFillPercent, clusteringWeight, size, networkDir);
 //		
-		NetworkAnalyzer netAn = new NetworkAnalyzer(networkDir);
+//		NetworkAnalyzer netAn = new NetworkAnalyzer();
+//		Network net = new Network(networkDir);
 //		netAn.saveClustering();
-		netAn.saveNodeDistribution();
+//		netAn.saveNodeDistribution(net, networkDir);
 		
 		//social pressure of 0 or 1 have no effect, 
 		//higher numbers mean lower base prob of tweet but more effect from seen.
@@ -35,9 +36,9 @@ public class CentralRunner {
 //		runner.runMultiple(numRuns, outputDir);
 		
 
-//		RunAnalyzer ra = new RunAnalyzer(networkDir, outputDir);
+		RunAnalyzer ra = new RunAnalyzer(networkDir, outputDir);
 //		ra.countOccurances(outputDir);
-//		ra.findClustersByRingingThresh();
+		ra.findClustersByRingingThresh();
 //		ra.findClustersByWindow();
 //		
 	}

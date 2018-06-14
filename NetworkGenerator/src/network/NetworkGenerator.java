@@ -87,10 +87,10 @@ public class NetworkGenerator {
 		double[] weights = new double[net.size];
 		Arrays.fill(weights, 10);
 
-		Node baseNode = net.getNodeById(index);
+		Node baseNode = net.nodes.get(index);
 		//baseNode.getClustering(net);
 		for (int i = 0; i < net.size; i++) {
-			Node currNode = net.getNodeById(i);
+			Node currNode = net.nodes.get(i);
 
 
 			// num_following/max_num_following
@@ -112,7 +112,7 @@ public class NetworkGenerator {
 		Arrays.fill(followersAvailable, Boolean.TRUE);
 
 		for(int i = 0; i < net.size; i++) {
-			Node currNode = net.getNodeById(i);
+			Node currNode = net.nodes.get(i);
 			followersAvailable[i] = currNode.getCurrentNumFollowers() < currNode.max_followers;
 		}
 		
@@ -130,7 +130,7 @@ public class NetworkGenerator {
 					someNeedsFollowers = true;
 				
 				
-				Node currNode = net.getNodeById(i);
+				Node currNode = net.nodes.get(i);
 				
 				int newFollower = -1;
 				double[] weights = new double[net.size];
@@ -141,7 +141,7 @@ public class NetworkGenerator {
 						Arrays.fill(weights, 1);
 					
 					newFollower = weighted_choice(weights);
-					if(net.getNodeById(newFollower).follow(currNode)) {
+					if(net.nodes.get(newFollower).follow(currNode)) {
 						followersAvailable[i] = currNode.getCurrentNumFollowers() < currNode.max_followers;
 						break;
 					}

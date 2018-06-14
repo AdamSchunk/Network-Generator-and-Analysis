@@ -11,15 +11,7 @@ import graphing.JfreeGraph;
 
 public class NetworkAnalyzer {
 	
-	String netDirectory;
-	Network net;
-	
-	public NetworkAnalyzer(String runDirecroty) throws IOException {
-		this.netDirectory = runDirecroty;
-		this.net = new Network(runDirecroty);
-	}
-	
-	public void saveNodeDistribution() throws IOException{
+	public void saveNodeDistribution(Network net, String netDirectory) throws IOException{
 		double[] degrees = new double[net.size];
 		for(int i = 0; i < net.size; i++) {
 			Node n = net.nodes.get(i);
@@ -31,11 +23,7 @@ public class NetworkAnalyzer {
 		runDataGraph.saveGraph(netDirectory+"overall network degree log.png");
 	}
 	
-	public void getSubgraphClustering(Network subgraph) {
-		
-	}
-	
-	public void saveClustering() throws IOException {
+	public void saveClustering(Network net, String netDirectory, String fileName) throws IOException {
 		double[] clusterVals = new double[net.nodes.size()];
 		double[] followerVals = new double[net.nodes.size()];
 		for(Node n : net.nodes) {
@@ -57,8 +45,8 @@ public class NetworkAnalyzer {
 				if(clusterVals[j] == 0) {
 					continue;
 				}
-				if(net.getNodeById(j).max_followers <= minFollowers) {
-					minFollowers = net.getNodeById(j).max_followers;
+				if(net.nodes.get(j).max_followers <= minFollowers) {
+					minFollowers = net.nodes.get(j).max_followers;
 					clusterVal = clusterVals[j];
 					followerVal = followerVals[j];
 					index = j;
@@ -72,7 +60,7 @@ public class NetworkAnalyzer {
 			sortedFollowerVals[i] = Math.log10(sortedFollowerVals[i]);
 		}
 		JfreeGraph grapher = new JfreeGraph("Clustering Log", sortedFollowerVals, sortedClusterVals);
-		grapher.saveGraph(netDirectory + "clustering.png");	
+		grapher.saveGraph(netDirectory + fileName + ".png");	
 		
 	}
 }

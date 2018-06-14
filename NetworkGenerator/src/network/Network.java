@@ -45,7 +45,7 @@ public class Network {
 				String[] data = line.split(",");
 				int fromIdx = Integer.parseInt(data[0]);
 				int toIdx = Integer.parseInt(data[1]);
-				getNodeById(toIdx).follow(getNodeById(fromIdx));
+				nodes.get(toIdx).follow(nodes.get(fromIdx));
 				
 			}
         }
@@ -102,8 +102,8 @@ public class Network {
 		edgeWriter.close();
 	}
 	
-	public Node getNodeById(int id) {
-		return nodes.get(id);
-	}
+//	public Node getNodeById(int id) {
+//		return nodes.get(id);
+//	}
 
 }

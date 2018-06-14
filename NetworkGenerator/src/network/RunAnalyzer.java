@@ -52,7 +52,7 @@ public class RunAnalyzer {
 		int i = 0;
 		for(int occurance : occurances) {
 			if(occurance > 200 ) {
-				System.out.println(i + ": " + occurance + ", " + net.getNodeById(i).max_followers);	
+				System.out.println(i + ": " + occurance + ", " + net.nodes.get(i).max_followers);	
 			}
 			i++;
 		}
@@ -60,6 +60,7 @@ public class RunAnalyzer {
 
 	
 	public void findClustersByRingingThresh() throws IOException {
+		int windowSize = 10;
 		File[] runDirectories = new File(runDirectory).listFiles(File::isDirectory);
 		
 		ArrayList<ArrayList<Double>> listOfClusters = new ArrayList<>();
@@ -77,7 +78,7 @@ public class RunAnalyzer {
 				if(!record && val > 12 && i > 50) {
 					tmp = new ArrayList<>();
 					record = true;
-					int windowSize = 5;
+					
 					for(int j = i-windowSize; j < i; j++) {
 						for(Node n : timeSteps.get(j)) {
 							if(n != null) {
@@ -117,11 +118,13 @@ public class RunAnalyzer {
 		
 		double[] degrees = new double[nodeIdsD.length];
 		for(int i = 0; i < degrees.length; i++) {
-			degrees[i] = Math.log10(net.getNodeById((int)nodeIdsD[i].doubleValue()).max_followers);
+			degrees[i] = Math.log10(net.nodes.get((int)nodeIdsD[i].doubleValue()).max_followers);
 		}
 		Arrays.sort(degrees);
 		
-		
+		Network subGraph = net.getSubgraphD(listOfClusters.get(0));
+		NetworkAnalyzer netAn = new NetworkAnalyzer();
+		netAn.saveClustering(subGraph, netDirectory, "subGraph0");
 		
 		JfreeGraph runDataGraph = new JfreeGraph("log clustering degree" , degrees);
 		runDataGraph.saveGraph(netDirectory+"cluster degree log.png");
@@ -202,7 +205,7 @@ public class RunAnalyzer {
 				String[] data = line.split(" ");
 				for(String d : data) {
 					if(!d.isEmpty())
-						timeStep.add(net.getNodeById(Integer.parseInt(d)));
+						timeStep.add(net.nodes.get(Integer.parseInt(d)));
 					else
 						timeStep.add(null);
 				}
@@ -235,7 +238,7 @@ public class RunAnalyzer {
 		
 		for(int i = 0; i < window.length; i++) {
 			if (window[i] > thresh) {
-				potentialCluster.add(net.getNodeById(i));
+				potentialCluster.add(net.nodes.get(i));
 			}
 		}
 		return potentialCluster;

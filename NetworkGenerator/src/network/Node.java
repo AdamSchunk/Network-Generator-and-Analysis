@@ -28,7 +28,7 @@ public class Node {
 		double denom = subgraph.size() * (subgraph.size() -1);
 		
 		for(Integer nodeIdInSubgraph : subgraph) {
-			Node nodeInSubgraph = net.getNodeById(nodeIdInSubgraph);
+			Node nodeInSubgraph = net.nodes.get(nodeIdInSubgraph);
 			List<Integer> intersectFollowers = subgraph.stream().filter(
 					nodeInSubgraph.getFollowerIds()::contains).collect(Collectors.toList());
 			linksInSubgraph += intersectFollowers.size();

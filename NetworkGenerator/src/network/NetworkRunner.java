@@ -54,7 +54,7 @@ public class NetworkRunner {
 		ArrayList<ArrayList<Node>> timeSteps = new ArrayList<ArrayList<Node>>();
 		
 		//System.out.println(net.getNodeById(start).id);
-		Node startNode = net.getNodeById(start);
+		Node startNode = net.nodes.get(start);
 		tweet(startNode, hasTweeted, numSeen, lastSeen, 0);
 		
 		ArrayList<Node> initalTweet = new ArrayList<Node>();
@@ -86,7 +86,7 @@ public class NetworkRunner {
 				
 				
 				if (r < prob) {
-					toTweet.add(net.getNodeById(i));
+					toTweet.add(net.nodes.get(i));
 					totalTweets++;
 				} 
 			}
