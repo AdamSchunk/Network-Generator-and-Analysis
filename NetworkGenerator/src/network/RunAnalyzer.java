@@ -10,6 +10,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import arrayUtils.ArrayUtils;
 import graphing.JfreeGraph;
 
 import java.util.ArrayList;
@@ -73,9 +74,11 @@ public class RunAnalyzer {
 			
 			ArrayList<ArrayList<Double>> clustersInFile = new ArrayList<>();
 			ArrayList<Double> tmp = new ArrayList<>();
-			for(int i = 0; i < smoothIterative.length; i++) {
+			int spikeWindow = 2;
+			for(int i = spikeWindow +1; i < smoothIterative.length; i++) {
 				double val = smoothIterative[i];
-				if(!record && val > 12 && i > 50) {
+				double prevVal = smoothIterative[i-spikeWindow];
+				if(!record && val > 12 && i > 50 && val - prevVal > 7) {
 					tmp = new ArrayList<>();
 					record = true;
 					
@@ -98,35 +101,117 @@ public class RunAnalyzer {
 			listOfClusters.addAll(clustersInFile);
 		}
 		
-		System.out.println(numNodes);
+		System.out.println(numNodes + " total nodes");
+		
+		analyizeClusters(listOfClusters);
+	}
 		
 		
+	public void analyizeClusters(ArrayList<ArrayList<Double>> listOfClusters) throws IOException {
 		
 		String outStr = "";
-		Set<Double> nodeIdSet = new HashSet<Double>();
+		//finds the complete set of node ids (including non unique)
+		//also finds the frequency at which each node is included
+		int[] frequency = new int[net.size];
 		for(int i = 0; i < listOfClusters.size(); i++) {
 			ArrayList<Double> cluster = listOfClusters.get(i);
 			for(Double nodeId : cluster) {
+				frequency[nodeId.intValue()]++;
 				outStr += nodeId.intValue() + " ";
-				//System.out.println(nodeId);
-				nodeIdSet.add(nodeId);
 			}
 			outStr += "\n";
 		}
 		
-		Double[] nodeIdsD = nodeIdSet.toArray(new Double[nodeIdSet.size()]);
-		
-		double[] degrees = new double[nodeIdsD.length];
-		for(int i = 0; i < degrees.length; i++) {
-			degrees[i] = Math.log10(net.nodes.get((int)nodeIdsD[i].doubleValue()).max_followers);
+		//filteres the list of nodes by how frequently they appear
+		int filteredNodeCount = 0;
+		ArrayList<Double> filteredIds = new ArrayList<Double>();
+		for(int i = 0; i < frequency.length; i++) {
+			if (frequency[i] > 10) {
+				Node n = net.nodes.get(i);
+				if (n.getCurrentNumFollowers() < 4000){
+				filteredIds.add(i*1.0);
+				filteredNodeCount++;
+				}
+			}
 		}
-		Arrays.sort(degrees);
 		
-		Network subGraph = net.getSubgraphD(listOfClusters.get(0));
-		NetworkAnalyzer netAn = new NetworkAnalyzer();
-		netAn.saveClustering(subGraph, netDirectory, "subGraph0");
+		Double[] nodeIdsD = new Double[filteredIds.size()];
+		nodeIdsD = filteredIds.toArray(nodeIdsD);
 		
-		JfreeGraph runDataGraph = new JfreeGraph("log clustering degree" , degrees);
+		System.out.println(filteredNodeCount + " filtered unique nodes");
+		
+		//finds the degree distribution of the filtered set of nodes
+		double[] degreesLog = new double[nodeIdsD.length];
+		for(int i = 0; i < degreesLog.length; i++) {
+			degreesLog[i] = Math.log10(net.nodes.get(nodeIdsD[i].intValue()).max_followers);
+			
+		}
+		
+
+		
+		Arrays.sort(degreesLog);
+		
+	
+		
+		//finds the subgraph clustering of a set of nodes
+		
+		ArrayList<Double> subGraphClusterVals = new ArrayList<Double>();
+		ArrayList<Double> subGraphFollowerVals = new ArrayList<Double>();
+		for(int i = 0; i < listOfClusters.size(); i++) {
+			ArrayList<Double> cluster = listOfClusters.get(i);
+			Network subGraph = net.getSubgraphD(cluster);
+			NetworkAnalyzer netAn = new NetworkAnalyzer();
+			for(Node nodeInCluster : subGraph.nodes) {
+				Node nInMain = subGraph.nodes.get(nodeInCluster.id);
+				subGraphClusterVals.add(subGraph.getClustering(nodeInCluster));
+				subGraphFollowerVals.add((double)nInMain.getCurrentNumFollowers());
+			}
+		}
+		ArrayUtils arrayUtils = new ArrayUtils();
+		
+		double[] subGraphClusterValsArr = new double[subGraphClusterVals.size()];
+		double[] subGraphFollowerValsArr = new double[subGraphFollowerVals.size()];
+		for (int i = 0; i < subGraphClusterValsArr.length; i++) {
+			subGraphClusterValsArr[i] = subGraphClusterVals.get(i).doubleValue();
+			subGraphFollowerValsArr[i] = subGraphFollowerVals.get(i).doubleValue(); 
+		}
+		
+		Object[] sortedSubgraphArrays = arrayUtils.sortAonB(subGraphClusterValsArr, subGraphFollowerValsArr);
+		double[] sortedSubgraphClusterVals = (double[])sortedSubgraphArrays[0];
+		double[] sortedSubgraphFollowerVals = (double[])sortedSubgraphArrays[1];
+		
+		double[] fullClusterVals = new double[nodeIdsD.length];
+		double[] fullFollowerVals = new double[nodeIdsD.length];
+		
+		//finds the overall clustering of a set of nodes
+		System.out.println("finding clustering vals");
+		for(int i = 0; i < nodeIdsD.length; i++) {
+			int id = nodeIdsD[i].intValue();
+			Node n = net.nodes.get(id);
+			fullClusterVals[i] = net.getClustering(n);
+			fullFollowerVals[i] = n.getCurrentNumFollowers();
+		}
+		
+		//sorts the cluster values based on the number of followers
+		System.out.println("sorting clustering vals");
+	
+		Object[] sortedArrays = arrayUtils.sortAonB(fullClusterVals, fullFollowerVals);
+		double[] sortedFullClusterVals = (double[])sortedArrays[0];
+		double[] sortedFullFollowerVals = (double[])sortedArrays[1];
+		
+		
+		System.out.println("evaluating logs");
+		for(int i = 0; i < sortedFullFollowerVals.length; i++) {
+			sortedFullFollowerVals[i] = Math.log10(sortedFullFollowerVals[i]);
+		}
+		
+		JfreeGraph subGraphGrapher = new JfreeGraph("SubgraphClustering Log", sortedSubgraphFollowerVals, sortedSubgraphClusterVals);
+		subGraphGrapher.saveGraph(netDirectory + "subgraph clustering.png");	
+		
+		JfreeGraph grapher = new JfreeGraph("Clustering Log", sortedFullFollowerVals, sortedFullClusterVals);
+		grapher.saveGraph(netDirectory + "clusters clustering.png");	
+		
+		JfreeGraph runDataGraph = new JfreeGraph("log clustering degree" , degreesLog);
 		runDataGraph.saveGraph(netDirectory+"cluster degree log.png");
 		
 		System.out.println("finishedMakingFile");
