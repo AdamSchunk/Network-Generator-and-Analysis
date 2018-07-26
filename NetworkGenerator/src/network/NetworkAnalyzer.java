@@ -23,17 +23,26 @@ public class NetworkAnalyzer {
 		runDataGraph.saveGraph(netDirectory+"overall network degree log.png");
 	}
 	
-	public void saveClustering(Network net, String netDirectory, String fileName) throws IOException {
+	public double[] getClustering(Network net) throws IOException {
 		double[] clusterVals = new double[net.nodes.size()];
 		double[] followerVals = new double[net.nodes.size()];
 		for(Node n : net.nodes) {
 			followerVals[n.id] = n.max_followers;
-			if(n.id%1000 == 0) {
+			if(n.id%1000 == 0 && net.size > 10000) {
 				System.out.println(n.id);
 			}
 			
-			clusterVals[n.id] = n.getClustering(net);
+			clusterVals[n.id] = net.getClustering(n);
 		}
+		
+		return clusterVals;
+		
+	}
+	
+	public void saveClustering(Network net, String netDirectory, String fileName) throws IOException {
+		double[] clusterVals = getClustering(net);
+		double[] followerVals = new double[net.nodes.size()];
+		
 		double[] sortedClusterVals = new double[clusterVals.length];
 		double[] sortedFollowerVals = new double[followerVals.length];
 		for(int i = 0; i < clusterVals.length; i++) {
