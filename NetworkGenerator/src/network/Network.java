@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import listUtils.ListUtils;
@@ -53,6 +55,12 @@ public class Network {
         System.out.println("Network Loaded");
 	}
 	
+	public boolean addNode(Node n) {
+		this.nodes.add(n);
+		this.size++;
+		return true;
+	}
+	
 	public Network getSubgraphD(List<Double> ids) {
 		List<Integer> idList = new ArrayList<Integer>();
 		for(Double id : ids)
@@ -61,23 +69,53 @@ public class Network {
 		return getSubgraphI(idList);
 	}
 	
+	//output has ids from 0 to n
 	public Network getSubgraphI(List<Integer> ids) {
 		ListUtils listUtils = new ListUtils();
 		Network subgraph = new Network();
-		for(int id : ids) {
+		
+		HashMap<Integer, Integer> hmap = new HashMap<Integer, Integer>();
+		int count = 0;
+		for(int id : ids) { //adds all the true Ids of the subgraph nodes
 			Node baseNode = nodes.get(id);
-			Node subGraphNode = new Node(baseNode.max_followers, baseNode.max_following, id);
-			subgraph.nodes.add(subGraphNode);
+			hmap.put(id, count);
+			Node subGraphNode = new Node(baseNode.max_followers, baseNode.max_following, hmap.get(id), id);
+			subgraph.addNode(subGraphNode);
+			count ++;
 		}
 		
 		for(Node subGraphNode : subgraph.nodes) {
-			Node baseNode = nodes.get(subGraphNode.id);
+			Node baseNode = nodes.get(subGraphNode.refId);
 			List<Integer> idsToFollow = listUtils.intersection(ids, baseNode.getFollowingIds());
-			ArrayList<Node> nodesToFollow =  new ArrayList<Node>() {{ for (int i : idsToFollow) add(subgraph.getNodeById(i)); }};
+			ArrayList<Node> nodesToFollow =  new ArrayList<Node>() {{ for (int i : idsToFollow) add(subgraph.getNodeById(hmap.get(i))); }};
 			subGraphNode.follow(nodesToFollow);
 		}
 		
-		return null;
+		return subgraph;
+	}
+	
+	public double getClustering(Node node) {
+		double linksInSubgraph = 0;
+		ArrayList<Integer> subgraph = new ArrayList<Integer>();
+		subgraph.add(node.id);
+		for(Integer followerId : node.getFollowerIds()) {
+			subgraph.add(followerId);
+		}
+		
+		for(Integer followingId : node.getFollowingIds()) {
+			if (!subgraph.contains(followingId))
+				subgraph.add(followingId);
+		}
+		
+		double denom = subgraph.size() * (subgraph.size() -1);
+		
+		for(Integer nodeIdInSubgraph : subgraph) {
+			Node nodeInSubgraph = this.nodes.get(nodeIdInSubgraph);
+			List<Integer> intersectFollowers = subgraph.stream().filter(
+					nodeInSubgraph.getFollowerIds()::contains).collect(Collectors.toList());
+			linksInSubgraph += intersectFollowers.size();
+		}
+		return linksInSubgraph/denom;
 	}
 	
 	public void saveNetwork(String dir) throws IOException {
@@ -102,8 +140,13 @@ public class Network {
 		edgeWriter.close();
 	}
 	
-//	public Node getNodeById(int id) {
-//		return nodes.get(id);
-//	}
+	public Node getNodeById(int id) {
+		for(Node n : this.nodes) {
+			if(n.id == id)
+				return n;
+
+		}
+		return null;
+	}
 
 }
