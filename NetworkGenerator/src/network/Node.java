@@ -7,34 +7,13 @@ public class Node {
 	int max_followers = 0;
 	int max_following = 0;
 	int id = 0;
+	int refId = -1;
 	static int numNodes = 0;
 	private ArrayList<Integer> followers = new ArrayList<>();
 	private ArrayList<Integer> following = new ArrayList<>();
 	Map<Integer, Integer> intersection;
 	
-	public double getClustering(Network net) {
-		double linksInSubgraph = 0;
-		ArrayList<Integer> subgraph = new ArrayList<Integer>();
-		subgraph.add(this.id);
-		for(Integer followerId : this.getFollowerIds()) {
-			subgraph.add(followerId);
-		}
-		
-		for(Integer followingId : this.getFollowingIds()) {
-			if (!subgraph.contains(followingId))
-				subgraph.add(followingId);
-		}
-		
-		double denom = subgraph.size() * (subgraph.size() -1);
-		
-		for(Integer nodeIdInSubgraph : subgraph) {
-			Node nodeInSubgraph = net.nodes.get(nodeIdInSubgraph);
-			List<Integer> intersectFollowers = subgraph.stream().filter(
-					nodeInSubgraph.getFollowerIds()::contains).collect(Collectors.toList());
-			linksInSubgraph += intersectFollowers.size();
-		}
-		return linksInSubgraph/denom;
-	}
+
 	
 	public Node(int followers, int following) {
 		this(followers, following, numNodes);
@@ -47,6 +26,14 @@ public class Node {
 		this.max_following = following;
 		this.max_followers = followers;
 		this.id = id;
+		this.intersection = new HashMap<Integer, Integer>();
+	}
+	
+	public Node(int followers, int following, int id, int refId) {
+		this.max_following = following;
+		this.max_followers = followers;
+		this.id = id;
+		this.refId = refId;
 		this.intersection = new HashMap<Integer, Integer>();
 	}
 	
