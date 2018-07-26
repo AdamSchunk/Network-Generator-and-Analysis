@@ -32,9 +32,11 @@ public class NetworkRunner {
 	public void tweet(Node user, boolean[] hasTweeted, int[] numSeen, int[] lastSeen, int ts) {
 		hasTweeted[user.id] = true;
 		
-		for(int id : user.getFollowerIds()) {
-			numSeen[id]++;
-			lastSeen[id] = ts;
+		for(int follower : user.getFollowerIds()) {
+			if(!hasTweeted[follower]) {
+				numSeen[follower]++;
+				lastSeen[follower] = ts;
+			}
 		}
 	}
 	
@@ -75,6 +77,7 @@ public class NetworkRunner {
 					continue;
 				
 				double r = rand.nextDouble();
+				//reset decay factor if seen recently
 				double time_past = step - lastSeen[i];
 				
 				double prob = baseProb/(time_past*3);
@@ -114,8 +117,10 @@ public class NetworkRunner {
 		
 		int[] cumulativeData = new int[timeSteps.size()];
 		int[] iterativeData = new int[timeSteps.size()];
+		int[] numSeenData = new int[timeSteps.size()];
 		int[] averageFollowerTimestep = new int[timeSteps.size()];
 		int[] runKey = new int[net.size];
+		int[] numSeen = new int[net.size];
 		Arrays.fill(runKey, -1);
 		String timeStepsString = "";
 		int count = 0;
@@ -128,13 +133,21 @@ public class NetworkRunner {
 				averageFollowerTimestep[i] =+ n.max_followers/ts.size();
 				timeStepsString += n.id + " ";
 				runKey[n.id] = i;
+				if(numSeenData[i] < numSeen[n.id])
+					numSeenData[i] = numSeen[n.id];
+			}
+			for(Node n : ts) {
+				for(int follower : n.getFollowerIds()) {
+					numSeen[follower]++;
+				}
 			}
 			timeStepsString += "\n";  
 		}
 		
-		double[] smoothIterative = new double[timeSteps.size()];
 		ExponentialMovingAverage ema = new ExponentialMovingAverage(.25);
-		smoothIterative = ema.average(Arrays.stream(iterativeData).asDoubleStream().toArray());
+		double[] smoothIterative = ema.average(Arrays.stream(iterativeData).asDoubleStream().toArray());
+		
+		double[] smoothNumSeenData = ema.average(Arrays.stream(numSeenData).asDoubleStream().toArray());
 		
 		JfreeGraph runDataGraph = new JfreeGraph(runID, cumulativeData);
 		runDataGraph.saveGraph(dir+"cumulative.png");
@@ -147,6 +160,9 @@ public class NetworkRunner {
 		
 		runDataGraph = new JfreeGraph(runID, averageFollowerTimestep);
 		runDataGraph.saveGraph(dir+"followersInTsAverage.png");
+		
+		runDataGraph = new JfreeGraph(runID, smoothNumSeenData);
+		runDataGraph.saveGraph(dir+"maxNumSeen.png");
 		
 		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
 		out.write(timeStepsString);
@@ -171,7 +187,13 @@ public class NetworkRunner {
 			while(true) {
 				//System.out.println("running");
 				timeSteps = run(net);
-				if(timeSteps.size() > minRetweets) {
+				int retweets = 0;
+				for(ArrayList<Node>  ts : timeSteps) {
+					for(Node node : ts) {
+						retweets++;
+					}
+				}
+				if(retweets > minRetweets) {
 					break;
 				}
 				//System.out.println("bad run");
