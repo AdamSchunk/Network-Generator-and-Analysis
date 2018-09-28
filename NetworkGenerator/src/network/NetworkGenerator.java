@@ -90,6 +90,10 @@ public class NetworkGenerator {
 		Node baseNode = net.nodes.get(index);
 		//baseNode.getClustering(net);
 		for (int i = 0; i < net.size; i++) {
+			if(i == index) {
+				weights[i] = 0;
+				continue;
+			}
 			Node currNode = net.nodes.get(i);
 
 
