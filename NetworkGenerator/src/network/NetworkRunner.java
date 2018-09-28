@@ -140,13 +140,22 @@ public class NetworkRunner {
 				for(int follower : n.getFollowerIds()) {
 					numSeen[follower]++;
 				}
+				
+			}
+			if(i > 5) {
+				ArrayList<Node> prevTs = timeSteps.get(i-5);
+				for(Node n : prevTs) {
+					for(int follower : n.getFollowerIds()) {
+						numSeen[follower]--;
+					}
+					
+				}
 			}
 			timeStepsString += "\n";  
 		}
 		
 		ExponentialMovingAverage ema = new ExponentialMovingAverage(.25);
 		double[] smoothIterative = ema.average(Arrays.stream(iterativeData).asDoubleStream().toArray());
-		
 		double[] smoothNumSeenData = ema.average(Arrays.stream(numSeenData).asDoubleStream().toArray());
 		
 		JfreeGraph runDataGraph = new JfreeGraph(runID, cumulativeData);
@@ -174,6 +183,10 @@ public class NetworkRunner {
 		
 		out = new PrintWriter(dir + "smoothIterative.csv");
 		out.write(Arrays.toString(smoothIterative));
+		out.close();
+		
+		out = new PrintWriter(dir + "numSeenData.csv");
+		out.write(Arrays.toString(smoothNumSeenData));
 		out.close();
 		
 		
