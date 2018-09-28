@@ -59,7 +59,6 @@ public class RunAnalyzer {
 		}
 	}
 
-	
 	public void findClustersByRingingThresh() throws IOException {
 		int windowSize = 10;
 		File[] runDirectories = new File(runDirectory).listFiles(File::isDirectory);
@@ -70,7 +69,7 @@ public class RunAnalyzer {
 		for(File f : runDirectories) { //for each run find the nodes that tweeted around our base node
 			boolean record = false;
 			double[] smoothIterative = loadArray(f.getPath() + "/smoothIterative.csv");
-			 ArrayList<ArrayList<Node>> timeSteps = loadTimeSteps(f.getPath() + "/timeSteps.csv");
+			ArrayList<ArrayList<Node>> timeSteps = loadTimeSteps(f.getPath() + "/timeSteps.csv");
 			
 			ArrayList<ArrayList<Double>> clustersInFile = new ArrayList<>();
 			ArrayList<Double> tmp = new ArrayList<>();
@@ -105,8 +104,7 @@ public class RunAnalyzer {
 		
 		analyizeClusters(listOfClusters);
 	}
-		
-		
+			
 	public void analyizeClusters(ArrayList<ArrayList<Double>> listOfClusters) throws IOException {
 		
 		String outStr = "";
@@ -122,7 +120,7 @@ public class RunAnalyzer {
 			outStr += "\n";
 		}
 		
-		//filteres the list of nodes by how frequently they appear
+		//filters the list of nodes by how frequently they appear
 		int filteredNodeCount = 0;
 		ArrayList<Double> filteredIds = new ArrayList<Double>();
 		for(int i = 0; i < frequency.length; i++) {
