@@ -107,6 +107,10 @@ public class Network {
 				subgraph.add(followingId);
 		}
 		
+		if(subgraph.contains(node.id)) {
+			subgraph.remove(subgraph.indexOf(node.id));
+		}
+		
 		double denom = subgraph.size() * (subgraph.size() -1);
 		
 		for(Integer nodeIdInSubgraph : subgraph) {
@@ -114,7 +118,17 @@ public class Network {
 			List<Integer> intersectFollowers = subgraph.stream().filter(
 					nodeInSubgraph.getFollowerIds()::contains).collect(Collectors.toList());
 			linksInSubgraph += intersectFollowers.size();
+			if(intersectFollowers.size() > nodeInSubgraph.getCurrentNumFollowers()) {
+				System.out.println(nodeIdInSubgraph);
+				System.out.println(nodeInSubgraph.getFollowerIds().toString());
+				System.out.println(intersectFollowers.toString());
+			}
 		}
+		
+		if(linksInSubgraph > denom) {
+			System.out.println("not like this");
+		}
+		
 		return linksInSubgraph/denom;
 	}
 	
