@@ -141,7 +141,7 @@ public class NetworkRunner {
 				double clustering = net.getClustering(n);
 				if(clustering > maxClusteringPerTs[i])
 					maxClusteringPerTs[i] = clustering;
-				if(maxNumSeenPerTs[i] < numSeen[n.id])
+				if(numSeen[n.id] > maxNumSeenPerTs[i])
 					maxNumSeenPerTs[i] = numSeen[n.id];
 			}
 			for(Node n : ts) {
@@ -206,7 +206,7 @@ public class NetworkRunner {
 
 	public void runMultiple(int iterations, String outputDir) throws Exception {
 		for (int i = 0; i < iterations; i++) {
-			System.out.println(i);
+			System.out.println("Beginning run: " +  i);
 			ArrayList<ArrayList<Node>> timeSteps = null;
 			while(true) {
 				//System.out.println("running");
@@ -223,6 +223,7 @@ public class NetworkRunner {
 				}
 				//System.out.println("bad run");
 			}
+			System.out.println("Saving Run: " + i);
 			saveRun(timeSteps, outputDir);
 		}
 	}
