@@ -42,7 +42,6 @@ public class NetworkGenerator {
 		return a*Math.exp(-b*x)+c;
 	}
 		
-	
 	public int[] nodeStatFunc() {
 		int[] stats = { 0, 0 }; // [followers, following]
 		Random rand = new Random();
@@ -58,8 +57,6 @@ public class NetworkGenerator {
 		} else {
 			stats[0] = 500 + (int)exponential(rand.nextDouble()*100, exp[0], exp[1], exp[2])*10;
 		}
-		
-
 
 		if (stats[0] <= 1000) {
 			stats[1] = (int) (stats[0] * (1.2 - (stats[0] / 5000)) + 3);
@@ -84,30 +81,40 @@ public class NetworkGenerator {
 	}
 	
 	public double[] genEdgeWeights(Network net, int index, int clusteringWeight) {
-		double[] weights = new double[net.size];
-		Arrays.fill(weights, 10);
-
+		Random rand = new Random();
 		Node baseNode = net.nodes.get(index);
+		double expectedFollowing = baseNode.max_following;
+		double expectedClustering = (1000-expectedFollowing)/1000*.25+.05;
+		expectedClustering = Math.max(expectedClustering, .1);
+		double r = rand.nextDouble();
+		boolean inCluster = (r<expectedClustering&&baseNode.getFollowerIds().size()!=0);
+		
+		double[] weights = new double[net.size];
+		if(inCluster) {
+			Node randomFriend = net.nodes.get(
+					baseNode.getFollowerIds().get(rand.nextInt(baseNode.getFollowerIds().size())));
+			Arrays.fill(weights, 0);
+			for(int f : randomFriend.getFollowerIds()) {
+				weights[f] = 10;
+			}
+			for(int f : randomFriend.getFollowingIds()) {
+				weights[f] = 10;
+			}
+		} else {
+			Arrays.fill(weights, 10);
+		}
+		weights[index] = 0;
 		//baseNode.getClustering(net);
 		for (int i = 0; i < net.size; i++) {
-			if(i == index) {
-				weights[i] = 0;
+			if(weights[i] == 0)
 				continue;
-			}
+			
 			Node currNode = net.nodes.get(i);
-
-
+			
 			// num_following/max_num_following
 			double deduct = 10 * ((double) currNode.getCurrentNumFollowing() / (double) currNode.max_following);
 			weights[i] = weights[i] - Math.min(deduct, 9); // minimum 10% chance of connecting
-			
-			int clusterSize = 10 + 500*(baseNode.max_followers/1000);
-			
-			if(i/clusterSize - index/clusterSize == 0) {
-				weights[i] = weights[i]*clusteringWeight;
-			}
 		}
-
 		return weights;
 	}
 
