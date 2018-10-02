@@ -66,9 +66,8 @@ public class NetworkRunner {
 		
 		int step = 1;
 		int count = 0;
-		double baseProb = .01;
-		if(socialPressure >= 2)
-			baseProb = baseProb/socialPressure + baseProb/2;
+		//double baseProb = .00005;
+		double baseProb = .002;
 		int totalTweets = 0;
 		while(count <= 5) {
 			ArrayList<Node> toTweet = new ArrayList<Node>();
@@ -78,15 +77,20 @@ public class NetworkRunner {
 				
 				double r = rand.nextDouble();
 				//reset decay factor if seen recently
-				double time_past = step - lastSeen[i];
+				double timePast = step - lastSeen[i];
 				
-				double prob = baseProb/(time_past*3);
-
-				if(socialPressure >= 2) {
-					double pressure = Math.min(numSeen[i]*socialPressure/20+1, socialPressure);
-					prob = prob*pressure;
+				double prob = 0;
+				
+				if (socialPressure != 0) {
+					prob = baseProb/(timePast*3)*(numSeen[i]/500+1);
+//					double socialPressureFactor = (socialPressure*(numSeen[i]-1)/10)+1;
+//							//Math.pow(socialPressure,numSeen[i]-1);
+//					prob = baseProb*socialPressureFactor;
+//					prob = prob/((step+50)/50);
+				} else {
+					//small decay factor over time
+					prob = baseProb/((step+50)/50);
 				}
-				
 				
 				if (r < prob) {
 					toTweet.add(net.nodes.get(i));
@@ -117,7 +121,8 @@ public class NetworkRunner {
 		
 		int[] cumulativeData = new int[timeSteps.size()];
 		int[] iterativeData = new int[timeSteps.size()];
-		int[] numSeenData = new int[timeSteps.size()];
+		int[] maxNumSeenPerTs = new int[timeSteps.size()];
+		double[] maxClusteringPerTs = new double[timeSteps.size()];
 		int[] averageFollowerTimestep = new int[timeSteps.size()];
 		int[] runKey = new int[net.size];
 		int[] numSeen = new int[net.size];
@@ -133,8 +138,11 @@ public class NetworkRunner {
 				averageFollowerTimestep[i] =+ n.max_followers/ts.size();
 				timeStepsString += n.id + " ";
 				runKey[n.id] = i;
-				if(numSeenData[i] < numSeen[n.id])
-					numSeenData[i] = numSeen[n.id];
+				double clustering = net.getClustering(n);
+				if(clustering > maxClusteringPerTs[i])
+					maxClusteringPerTs[i] = clustering;
+				if(maxNumSeenPerTs[i] < numSeen[n.id])
+					maxNumSeenPerTs[i] = numSeen[n.id];
 			}
 			for(Node n : ts) {
 				for(int follower : n.getFollowerIds()) {
@@ -156,7 +164,7 @@ public class NetworkRunner {
 		
 		ExponentialMovingAverage ema = new ExponentialMovingAverage(.25);
 		double[] smoothIterative = ema.average(Arrays.stream(iterativeData).asDoubleStream().toArray());
-		double[] smoothNumSeenData = ema.average(Arrays.stream(numSeenData).asDoubleStream().toArray());
+		double[] smoothNumSeenData = ema.average(Arrays.stream(maxNumSeenPerTs).asDoubleStream().toArray());
 		
 		JfreeGraph runDataGraph = new JfreeGraph(runID, cumulativeData);
 		runDataGraph.saveGraph(dir+"cumulative.png");
@@ -172,6 +180,9 @@ public class NetworkRunner {
 		
 		runDataGraph = new JfreeGraph(runID, smoothNumSeenData);
 		runDataGraph.saveGraph(dir+"maxNumSeen.png");
+		
+		runDataGraph = new JfreeGraph(runID, maxClusteringPerTs);
+		runDataGraph.saveGraph(dir+"Max Clustering Per Ts.png");
 		
 		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
 		out.write(timeStepsString);
@@ -202,8 +213,9 @@ public class NetworkRunner {
 				timeSteps = run(net);
 				int retweets = 0;
 				for(ArrayList<Node>  ts : timeSteps) {
+					retweets+= ts.size();
 					for(Node node : ts) {
-						retweets++;
+						//retweets++;
 					}
 				}
 				if(retweets > minRetweets) {
