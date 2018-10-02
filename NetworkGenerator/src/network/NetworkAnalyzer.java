@@ -20,7 +20,7 @@ public class NetworkAnalyzer {
 		Arrays.sort(degrees);
 		
 		JfreeGraph runDataGraph = new JfreeGraph("log network degree" , degrees);
-		runDataGraph.saveGraph(netDirectory+"overall network degree log.png");
+		runDataGraph.saveGraph(netDirectory+"log network degree.png");
 	}
 	
 	public double[] getClustering(Network net) throws IOException {
@@ -31,24 +31,23 @@ public class NetworkAnalyzer {
 			if(n.id%1000 == 0 && net.size > 10000) {
 				System.out.println(n.id);
 			}
-			
-			clusterVals[n.id] = net.getClustering(n);
+			double clusterVal = net.getClustering(n);
+			System.out.println(clusterVal);
+			clusterVals[n.id] = clusterVal;
 		}
-		
 		return clusterVals;
 		
 	}
 	
 	public void saveClustering(Network net, String netDirectory, String fileName) throws IOException {
 		double[] clusterVals = getClustering(net);
-		double[] followerVals = new double[net.nodes.size()];
-		
 		double[] sortedClusterVals = new double[clusterVals.length];
-		double[] sortedFollowerVals = new double[followerVals.length];
+		double[] sortedFollowerVals = new double[net.nodes.size()];
+
+		
 		for(int i = 0; i < clusterVals.length; i++) {
 			int minFollowers = Integer.MAX_VALUE;
 			double clusterVal = 0;
-			double followerVal = 0;
 			int index = 0;
 			for(int j = 0; j < clusterVals.length; j++) {
 				if(clusterVals[j] == 0) {
@@ -57,18 +56,17 @@ public class NetworkAnalyzer {
 				if(net.nodes.get(j).max_followers <= minFollowers) {
 					minFollowers = net.nodes.get(j).max_followers;
 					clusterVal = clusterVals[j];
-					followerVal = followerVals[j];
 					index = j;
 				}
 			}
 			clusterVals[index] = 0;
 			sortedClusterVals[i] = clusterVal;
-			sortedFollowerVals[i] = followerVal;
+			sortedFollowerVals[i] = minFollowers;
 		}
 		for(int i = 0; i < sortedFollowerVals.length; i++) {
 			sortedFollowerVals[i] = Math.log10(sortedFollowerVals[i]);
 		}
-		JfreeGraph grapher = new JfreeGraph("Clustering Log", sortedFollowerVals, sortedClusterVals);
+		JfreeGraph grapher = new JfreeGraph("Log Node Clustering by Followers", sortedFollowerVals, sortedClusterVals);
 		grapher.saveGraph(netDirectory + fileName + ".png");	
 		
 	}
