@@ -152,6 +152,13 @@ public class Network {
 			}
 		}
 		edgeWriter.close();
+		
+		FileWriter clusteringWriter = new FileWriter(dir + "nodeClustering.csv");
+		for (Node n : nodes) {
+			String output = this.getClustering(n) + "\n";
+			clusteringWriter.write(output);
+		}
+		clusteringWriter.close();
 	}
 	
 	public Node getNodeById(int id) {
