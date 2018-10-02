@@ -1,5 +1,6 @@
 package network;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +40,17 @@ public class NetworkAnalyzer {
 		
 	}
 	
-	public void saveClustering(Network net, String netDirectory, String fileName) throws IOException {
+	public void saveClusteringById(Network net, String netDirectory) throws IOException {
+		FileWriter clusteringWriter = new FileWriter(netDirectory + "nodeClustering.csv");
+		for (Node n : net.nodes) {
+			System.out.println(n.id);
+			String output = net.getClustering(n) + "\n";
+			clusteringWriter.write(output);
+		}
+		clusteringWriter.close();
+	}
+	
+	public void graphClusteringByFollower(Network net, String netDirectory, String fileName) throws IOException {
 		double[] clusterVals = getClustering(net);
 		double[] sortedClusterVals = new double[clusterVals.length];
 		double[] sortedFollowerVals = new double[net.nodes.size()];
