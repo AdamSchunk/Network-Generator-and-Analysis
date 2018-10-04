@@ -91,8 +91,16 @@ public class NetworkGenerator {
 		
 		double[] weights = new double[net.size];
 		if(inCluster) {
-			Node randomFriend = net.nodes.get(
+			int randBin = rand.nextInt(2);
+			Node randomFriend = new Node(0, 0);
+			if(r == 0) {
+				randomFriend = net.nodes.get(
 					baseNode.getFollowerIds().get(rand.nextInt(baseNode.getFollowerIds().size())));
+			}
+			if(r == 1) {
+				randomFriend = net.nodes.get(
+					baseNode.getFollowingIds().get(rand.nextInt(baseNode.getFollowingIds().size())));
+			}
 			Arrays.fill(weights, 0);
 			for(int f : randomFriend.getFollowerIds()) {
 				weights[f] = 10;
