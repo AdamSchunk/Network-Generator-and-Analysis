@@ -1,6 +1,8 @@
 package network;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -113,7 +115,13 @@ public class NetworkRunner {
 		String runID = UUID.randomUUID().toString();
 		String dir = outputDir + runID + "/";
 		
-		
+		ArrayList<Double> nodeClustering = new ArrayList<Double>();
+		try (BufferedReader br = new BufferedReader(new FileReader(outputDir + "/../nodeClustering.csv"))) {
+		    String line;
+		    while ((line = br.readLine()) != null) {
+		       nodeClustering.add(Double.parseDouble(line));
+		    }
+		}
 		
 		if (!new File(dir).exists()) {
 			new File(dir).mkdirs();
@@ -138,7 +146,7 @@ public class NetworkRunner {
 				averageFollowerTimestep[i] =+ n.max_followers/ts.size();
 				timeStepsString += n.id + " ";
 				runKey[n.id] = i;
-				double clustering = net.getClustering(n);
+				double clustering = nodeClustering.get(n.id).doubleValue();
 				if(clustering > maxClusteringPerTs[i])
 					maxClusteringPerTs[i] = clustering;
 				if(numSeen[n.id] > maxNumSeenPerTs[i])
@@ -165,6 +173,7 @@ public class NetworkRunner {
 		ExponentialMovingAverage ema = new ExponentialMovingAverage(.25);
 		double[] smoothIterative = ema.average(Arrays.stream(iterativeData).asDoubleStream().toArray());
 		double[] smoothNumSeenData = ema.average(Arrays.stream(maxNumSeenPerTs).asDoubleStream().toArray());
+		double[] smoothClustering = ema.average(Arrays.stream(maxClusteringPerTs).toArray());
 		
 		JfreeGraph runDataGraph = new JfreeGraph(runID, cumulativeData);
 		runDataGraph.saveGraph(dir+"cumulative.png");
@@ -181,7 +190,7 @@ public class NetworkRunner {
 		runDataGraph = new JfreeGraph(runID, smoothNumSeenData);
 		runDataGraph.saveGraph(dir+"maxNumSeen.png");
 		
-		runDataGraph = new JfreeGraph(runID, maxClusteringPerTs);
+		runDataGraph = new JfreeGraph(runID, smoothClustering);
 		runDataGraph.saveGraph(dir+"Max Clustering Per Ts.png");
 		
 		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
