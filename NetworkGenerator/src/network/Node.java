@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 public class Node {
 	int max_followers = 0;
 	int max_following = 0;
+	double clustering = 0;
 	int id = 0;
 	int refId = -1;
 	static int numNodes = 0;
@@ -29,6 +30,12 @@ public class Node {
 		this.intersection = new HashMap<Integer, Integer>();
 	}
 	
+	public Node(int followers, int following, int id, double clustering) {
+		this(followers, following, id);
+		this.clustering = clustering;
+	}
+	
+	//ONLY used for generating subgraphs
 	public Node(int followers, int following, int id, int refId) {
 		this.max_following = following;
 		this.max_followers = followers;

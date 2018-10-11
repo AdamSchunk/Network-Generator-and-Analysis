@@ -136,7 +136,7 @@ public class Network {
 		System.out.println("saving data");
 		FileWriter nodeWriter = new FileWriter(dir + "nodes.csv");
 		for (Node n : nodes) {
-			String output = n.id + "," + n.max_followers + "," + n.max_following + "\n";
+			String output = n.id + "," + n.max_followers + "," + n.max_following + "," + n.clustering + "\n";
 			nodeWriter.write(output);
 		}
 		nodeWriter.close();

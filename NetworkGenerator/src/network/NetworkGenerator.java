@@ -93,11 +93,11 @@ public class NetworkGenerator {
 		if(inCluster) {
 			int randBin = rand.nextInt(2);
 			Node randomFriend = new Node(0, 0);
-			if(r == 0) {
+			if(randBin == 0) {
 				randomFriend = net.nodes.get(
 					baseNode.getFollowerIds().get(rand.nextInt(baseNode.getFollowerIds().size())));
 			}
-			if(r == 1) {
+			if(randBin == 1) {
 				randomFriend = net.nodes.get(
 					baseNode.getFollowingIds().get(rand.nextInt(baseNode.getFollowingIds().size())));
 			}
@@ -188,6 +188,13 @@ public class NetworkGenerator {
 		}
 	}
 	
+	public boolean findClustering(Network net) {
+		for (Node n : net.nodes) {
+			n.clustering = net.getClustering(n);
+		}
+		return true;
+	}
+	
 	public Network generateNetwork(double rndmFillPercent, int clusteringWeight, int size, String dir) throws IOException {
 		Network net = new Network();
 		
@@ -197,6 +204,7 @@ public class NetworkGenerator {
 		}
 		net.size = net.nodes.size();
 		genEdges(net, rndmFillPercent, clusteringWeight);
+		findClustering(net);
 		net.saveNetwork(dir);
 		return net;
 	}
