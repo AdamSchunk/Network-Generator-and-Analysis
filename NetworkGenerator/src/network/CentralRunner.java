@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class CentralRunner {
 	public static void main(String[] args) throws Exception {
 		String networkDir = "100000_cluster1000/";
-		String outputDir = "100000_cluster1000/socialPressure0_withSeen/";
+		String outputDir = "100000_cluster1000/socialPressure10/";
 
 		if (!new File(networkDir).exists()) {
 			new File(networkDir).mkdirs();
@@ -26,12 +26,13 @@ public class CentralRunner {
 //		Network net = new Network(networkDir);
 //		netAn.saveClustering(net, networkDir, "network log clustering");
 //		netAn.saveNodeDistribution(net, networkDir);
+//		netAn.saveClusteringById(net, networkDir);
 		
-		//social pressure of 0 or 1 have no effect, 
-		//higher numbers mean lower base prob of tweet but more effect from seen.
-		int numRuns = 500;
-		double socialPressure = 0;
-		int minRetweets = 10000;
+		//social pressure indicates how much more liekly someone is to tweet after their friend tweets
+		// social pressure should be 
+		int numRuns = 20;
+		double socialPressure = 10;
+		int minRetweets = 1000;
 		NetworkRunner runner = new NetworkRunner(socialPressure, minRetweets, networkDir);
 		runner.runMultiple(numRuns, outputDir);
 		
