@@ -130,10 +130,13 @@ public class NetworkRunner {
 		int[] cumulativeData = new int[timeSteps.size()];
 		int[] iterativeData = new int[timeSteps.size()];
 		int[] maxNumSeenPerTs = new int[timeSteps.size()];
-		double[] maxClusteringPerTs = new double[timeSteps.size()];
 		int[] averageFollowerTimestep = new int[timeSteps.size()];
 		int[] runKey = new int[net.size];
 		int[] numSeen = new int[net.size];
+		double[] maxClusteringPerTs = new double[timeSteps.size()];
+		double[] outDegWindow = new double[timeSteps.size()];
+		double[] outDegTs = new double[timeSteps.size()];
+		double[] outDegNodeRatio = new double[timeSteps.size()];
 		Arrays.fill(runKey, -1);
 		String timeStepsString = "";
 		int count = 0;
@@ -146,6 +149,7 @@ public class NetworkRunner {
 				averageFollowerTimestep[i] =+ n.max_followers/ts.size();
 				timeStepsString += n.id + " ";
 				runKey[n.id] = i;
+				outDegTs[i] += n.max_followers;
 				double clustering = nodeClustering.get(n.id).doubleValue();
 				if(clustering > maxClusteringPerTs[i])
 					maxClusteringPerTs[i] = clustering;
@@ -156,15 +160,19 @@ public class NetworkRunner {
 				for(int follower : n.getFollowerIds()) {
 					numSeen[follower]++;
 				}
-				
 			}
 			if(i > 5) {
 				ArrayList<Node> prevTs = timeSteps.get(i-5);
+				double nodesInWindow = 0;
+				for(int j = 0; j < 4; j++) {
+					outDegWindow[i] += outDegTs[i-j-1];
+					nodesInWindow += timeSteps.get(i-j-1).size();
+				}
+				outDegNodeRatio[i] = outDegWindow[i]/nodesInWindow;
 				for(Node n : prevTs) {
 					for(int follower : n.getFollowerIds()) {
 						numSeen[follower]--;
 					}
-					
 				}
 			}
 			timeStepsString += "\n";  
@@ -174,12 +182,17 @@ public class NetworkRunner {
 		double[] smoothIterative = ema.average(Arrays.stream(iterativeData).asDoubleStream().toArray());
 		double[] smoothNumSeenData = ema.average(Arrays.stream(maxNumSeenPerTs).asDoubleStream().toArray());
 		double[] smoothClustering = ema.average(Arrays.stream(maxClusteringPerTs).toArray());
+		double[] smoothOutDegree = ema.average(Arrays.stream(outDegWindow).toArray());
+		double[] smoothOutDegNodeRatio = ema.average(Arrays.stream(outDegNodeRatio).toArray());
 		
 		JfreeGraph runDataGraph = new JfreeGraph(runID, cumulativeData);
 		runDataGraph.saveGraph(dir+"cumulative.png");
 		
 		runDataGraph = new JfreeGraph(runID, iterativeData);
 		runDataGraph.saveGraph(dir+"iterative.png");
+		
+		runDataGraph = new JfreeGraph(runID, outDegNodeRatio);
+		runDataGraph.saveGraph(dir+"Out Degree to Nodes Ratio in Window.png");
 		
 		runDataGraph = new JfreeGraph(runID, smoothIterative);
 		runDataGraph.saveGraph(dir+"smoothIterative.png");
@@ -189,6 +202,9 @@ public class NetworkRunner {
 		
 		runDataGraph = new JfreeGraph(runID, smoothNumSeenData);
 		runDataGraph.saveGraph(dir+"maxNumSeen.png");
+		
+		runDataGraph = new JfreeGraph(runID, smoothOutDegree);
+		runDataGraph.saveGraph(dir+"out degree window.png");
 		
 		runDataGraph = new JfreeGraph(runID, smoothClustering);
 		runDataGraph.saveGraph(dir+"Max Clustering Per Ts.png");
