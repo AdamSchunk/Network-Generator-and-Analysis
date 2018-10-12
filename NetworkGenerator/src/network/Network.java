@@ -35,7 +35,7 @@ public class Network {
 				String line = scanner.next();
 				String[] data = line.split(",");
 				Node n = new Node(Integer.parseInt(data[1]), 
-						Integer.parseInt(data[2]), Integer.parseInt(data[0]));
+						Integer.parseInt(data[2]), Integer.parseInt(data[0]), Double.parseDouble(data[3]));
 				this.nodes.add(n);
 			}
         }
