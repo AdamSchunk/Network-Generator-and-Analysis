@@ -18,17 +18,23 @@ public class NetworkRunner {
 	private double socialPressure = 0;
 	private int minRetweets = 30;
 	private Network net;
+	private Predictor predictor;
 	
-	public NetworkRunner(double socialPressure, int minRetweets, Network net) {
+	private NetworkRunner(double socialPressure, int minRetweets) {
 		this.socialPressure = socialPressure;
 		this.minRetweets = minRetweets;
+	}
+	
+	public NetworkRunner(double socialPressure, int minRetweets, Network net) {
+		this(socialPressure, minRetweets);
 		this.net = net;
+		this.predictor = new Predictor(net);
 	}
 	
 	public NetworkRunner(double socialPressure, int minRetweets, String networkDirectory) throws IOException {
-		this.socialPressure = socialPressure;
-		this.minRetweets = minRetweets;
+		this(socialPressure, minRetweets);
 		this.net = new Network(networkDirectory);
+		this.predictor = new Predictor(net);
 	}
 	
 	public void tweet(Node user, boolean[] hasTweeted, int[] numSeen, int[] lastSeen, int ts) {
@@ -111,9 +117,8 @@ public class NetworkRunner {
 		return timeSteps;
 	}
 
-	public void saveRun(ArrayList<ArrayList<Node>> timeSteps, String outputDir) throws Exception {
-		String runID = UUID.randomUUID().toString();
-		String dir = outputDir + runID + "/";
+	public void saveRun(ArrayList<ArrayList<Node>> timeSteps, String outputDir, String runId) throws Exception {
+		String dir = outputDir + runId + "/";
 		
 		ArrayList<Double> nodeClustering = new ArrayList<Double>();
 		try (BufferedReader br = new BufferedReader(new FileReader(outputDir + "/../nodeClustering.csv"))) {
@@ -185,28 +190,28 @@ public class NetworkRunner {
 		double[] smoothOutDegree = ema.average(Arrays.stream(outDegWindow).toArray());
 		double[] smoothOutDegNodeRatio = ema.average(Arrays.stream(outDegNodeRatio).toArray());
 		
-		JfreeGraph runDataGraph = new JfreeGraph(runID, cumulativeData);
+		JfreeGraph runDataGraph = new JfreeGraph(runId, cumulativeData);
 		runDataGraph.saveGraph(dir+"cumulative.png");
 		
-		runDataGraph = new JfreeGraph(runID, iterativeData);
+		runDataGraph = new JfreeGraph(runId, iterativeData);
 		runDataGraph.saveGraph(dir+"iterative.png");
 		
-		runDataGraph = new JfreeGraph(runID, outDegNodeRatio);
+		runDataGraph = new JfreeGraph(runId, outDegNodeRatio);
 		runDataGraph.saveGraph(dir+"Out Degree to Nodes Ratio in Window.png");
 		
-		runDataGraph = new JfreeGraph(runID, smoothIterative);
+		runDataGraph = new JfreeGraph(runId, smoothIterative);
 		runDataGraph.saveGraph(dir+"smoothIterative.png");
 		
-		runDataGraph = new JfreeGraph(runID, averageFollowerTimestep);
+		runDataGraph = new JfreeGraph(runId, averageFollowerTimestep);
 		runDataGraph.saveGraph(dir+"followersInTsAverage.png");
 		
-		runDataGraph = new JfreeGraph(runID, smoothNumSeenData);
+		runDataGraph = new JfreeGraph(runId, smoothNumSeenData);
 		runDataGraph.saveGraph(dir+"maxNumSeen.png");
 		
-		runDataGraph = new JfreeGraph(runID, smoothOutDegree);
+		runDataGraph = new JfreeGraph(runId, smoothOutDegree);
 		runDataGraph.saveGraph(dir+"out degree window.png");
 		
-		runDataGraph = new JfreeGraph(runID, smoothClustering);
+		runDataGraph = new JfreeGraph(runId, smoothClustering);
 		runDataGraph.saveGraph(dir+"Max Clustering Per Ts.png");
 		
 		PrintWriter out = new PrintWriter(dir + "timeSteps.csv");
@@ -225,7 +230,34 @@ public class NetworkRunner {
 		out.write(Arrays.toString(smoothNumSeenData));
 		out.close();
 		
+		out = new PrintWriter(dir + "OutDegreeToNodesInWindowRatio.csv");
+		out.write(Arrays.toString(outDegNodeRatio));
+		out.close();
 		
+	}
+	
+	public void savePediction(ArrayList<ArrayList<Node>> timeSteps, String outputDir, String runId) throws IOException {
+		String dir = outputDir + runId + "/";
+		ArrayList<Double> prediction = predictor.makePredictionOnRun(timeSteps);
+		double[] predictionArray = new double[prediction.size()];
+		for(int i = 0; i < prediction.size(); i++) {
+			predictionArray[i] = prediction.get(i);
+		}
+		
+		ExponentialMovingAverage ema = new ExponentialMovingAverage(.25);
+		double[] smoothPrediction = ema.average(predictionArray);
+		
+		double[] timeSeenInRun = new double[prediction.size()];
+		
+		for(int i = 0; i < timeSteps.size(); i++) {
+			ArrayList<Node> ts = timeSteps.get(i);
+			for(int j = 0; j < ts.size(); j++) {
+				timeSeenInRun[i+j] = i+(j/ts.size());
+			}
+		}
+		
+		JfreeGraph runDataGraph = new JfreeGraph(runId, timeSeenInRun, smoothPrediction);
+		runDataGraph.saveGraph(dir+"prediction.png");
 		
 	}
 
@@ -249,7 +281,9 @@ public class NetworkRunner {
 				//System.out.println("bad run");
 			}
 			System.out.println("Saving Run: " + i);
-			saveRun(timeSteps, outputDir);
+			String runId = Integer.toString(i);
+			saveRun(timeSteps, outputDir, runId);
+			savePediction(timeSteps, outputDir, runId);
 		}
 	}
 	
